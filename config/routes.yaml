@@ -1,0 +1,60 @@
+home:
+    path: /
+    controller: App\Controller\DefaultController::index
+summary:
+    path: /book/summary
+    controller: App\Controller\BookController::summary
+book_latest:
+    path: /book/latest/{count}
+    controller: App\Controller\BookController::latest
+    defaults: 
+        count: 1
+    requirements:
+        count: '\d+'
+book_random:
+    path: /book/random/{count}
+    controller: App\Controller\BookController::random
+    defaults: 
+        count: 1
+    requirements:
+        count: '\d+'
+book_detail:
+    path: /book/detail/{bookid}
+    controller: App\Controller\BookController::detail
+    requirements:
+        count: '\d{5}'
+book_tags:
+    path: /book/tags/{bookid}
+    controller: App\Controller\BookController::tags
+    requirements:
+        count: '\ddddd'
+book_addtags:
+    path: /book/addtags
+    controller: App\Controller\BookController::addTags
+    methods: [POST]
+
+read_summary:
+    path: /read/summary
+    controller: App\Controller\ReadingController::summary
+read_latest:
+    path: /read/latest/{count}
+    controller: App\Controller\ReadingController::latest
+    defaults: 
+        count: 1
+    requirements:
+        count: '\d+'
+blog_latest:
+    path: /blog/latest/{count}
+    controller: App\Controller\BlogController::latest
+    defaults:
+        count: 1
+blog_summary:
+    path: /blog/summary
+    controller: App\Controller\BlogController::summary
+blog_today:
+    path: /blog/today
+    controller: App\Controller\BlogController::today
+qotd:
+    path: /qotd
+    controller: App\Controller\DefaultController::qotd
+    
