@@ -12,12 +12,17 @@ class BookController extends AbstractController
 {
     private Connection $_conn;
     private $filter;
+    private $rpp;
     public function __construct(Connection $connection)
     {
         $this->_conn = $connection;
-        $this->filter = ' location <>"na" and location <> "--"';
+        /*
+        2023年7月，搬家。所以扔掉了一些书。在数据库的处理上，将location设置为了na或者--，所以为了更好地进行藏书管理，
+        对涉及书籍的数据库操作，都需要增加一个filter
+        */
+        $this->filter = ' location <>"na" and location <> "--"'; 
         //$this->filter=' 1=1';
-
+        $this->rpp = 5;
     }
     public function summary(Connection $connection): JsonResponse
     {
@@ -42,7 +47,7 @@ class BookController extends AbstractController
 
         foreach ($data as &$r) {
             $img_uri = $r['bookid'];
-            $r['img'] = "https://api.rsywx.com/covers/$img_uri.jpg";
+            $r['img'] = "http://api/covers/$img_uri.jpg";
         }
 
 
@@ -60,49 +65,88 @@ class BookController extends AbstractController
 
     }
 
-    public function tags($bookid):JsonResponse
+    public function tags($bookid): JsonResponse
     {
         $sql = "SELECT t.tag FROM book_taglist t, book_book b where b.id=t.bid and b.bookid=:bookid";
         $stmt = $this->_conn->prepare($sql);
         $q = $stmt->execute([":bookid" => $bookid]);
         $res = $q->fetchAllAssociative();
-        $tags=[];
-        foreach($res as $r)
-        {
-            $tags[]=$r['tag'];
+        $tags = [];
+        foreach ($res as $r) {
+            $tags[] = $r['tag'];
         }
-        
+
         return new JsonResponse($tags);
     }
 
     public function addTags(Request $req): JsonResponse
     {
-        $id=$req->getPayload()->get('id');
-        $tags=$req->getPayload()->get('tags');
+        $id = $req->getPayload()->get('id');
+        $tags = $req->getPayload()->get('tags');
         $sql = "select tag from book_taglist where bid=:id";
-        $stmt=$this->_conn->prepare($sql);
+        $stmt = $this->_conn->prepare($sql);
 
-        $insertSql="insert into book_taglist (bid, tag) values (:id, :tag)";
+        $insertSql = "insert into book_taglist (bid, tag) values (:id, :tag)";
         $stmtInsert = $this->_conn->prepare($insertSql);
-        $q=$stmt->execute([':id'=>$id]);
-        $res=$q->fetchAllAssociative(); // Current tags
+        $q = $stmt->execute([':id' => $id]);
+        $res = $q->fetchAllAssociative(); // Current tags
 
-        $current_tags=[];
-        foreach($res as $r)
-        {
-            $current_tags[]=$r['tag'];
+        $current_tags = [];
+        foreach ($res as $r) {
+            $current_tags[] = $r['tag'];
         }
-        
-        $newTagList=explode(' ', $tags);
-        foreach($newTagList as $tag)
-        {
-            if(!in_array($tag, $current_tags))
-            {
-                $q=$stmtInsert->execute([':id'=>$id, ':tag'=>$tag]);
+
+        $newTagList = explode(' ', $tags);
+        foreach ($newTagList as $tag) {
+            if (!in_array($tag, $current_tags)) {
+                $q = $stmtInsert->execute([':id' => $id, ':tag' => $tag]);
             }
         }
 
-        return new JsonResponse(['status'=>'success']);
+        return new JsonResponse(['status' => 'success']);
     }
+
+    public function list($type, $value, $page): JsonResponse
+    {
+        $start=($page-1)*$this->rpp;
+        $sqlSearch = "";
+        $sqlPage = "";
+        
+        if($value=='-') // match for all
+        {
+            $value='';
+        }
+
+        $finalFilter="'%$value%'";
+
+        switch ($type) {
+            case "title":
+                $sqlSearch="select * from book_book where title like $finalFilter and ".$this->filter." order by id desc limit $start, $this->rpp";
+                $sqlPage="select count(*) as bc from book_book where title like $finalFilter and ".$this->filter;
+                break;
+            case "author":
+                $sqlSearch="select * from book_book where author like $finalFilter and ".$this->filter." order by id desc limit $start, $this->rpp";
+                $sqlPage="select count(*) as bc from book_book where author like $finalFilter and ".$this->filter;
+                break;
+            case "tag":
+                break;
+            case "misc":
+                break;
+        }
+
+        $selectStmt = $this->_conn->prepare($sqlSearch);
+        $selectQ=$selectStmt->execute();
+        $res1=$selectQ->fetchAllAssociative();
+
+        $pageStmt = $this->_conn->prepare($sqlPage);
+        $pageQ=$pageStmt->execute();
+        $res2=$pageQ->fetchAssociative();
+        $books_count=$res2['bc'];
+        $totalPages=ceil($books_count/$this->rpp);
+
+        return new JsonResponse(['books'=>$res1, 'pages'=> $totalPages]);
+    }
+
+
 
 }

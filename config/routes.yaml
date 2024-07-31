@@ -1,6 +1,7 @@
 home:
     path: /
     controller: App\Controller\DefaultController::index
+
 summary:
     path: /book/summary
     controller: App\Controller\BookController::summary
@@ -32,6 +33,13 @@ book_addtags:
     path: /book/addtags
     controller: App\Controller\BookController::addTags
     methods: [POST]
+book_list:
+    path: /book/search/{type}/{value}/{page}
+    controller: App\Controller\BookController::list
+    defaults:
+        type: 'title'
+        value: '-'
+        page: 1
 
 read_summary:
     path: /read/summary
