@@ -75,8 +75,8 @@ class BookController extends AbstractController
         foreach ($res as $r) {
             $tags[] = $r['tag'];
         }
-
         return new JsonResponse($tags);
+        
     }
 
     public function addTags(Request $req): JsonResponse
@@ -136,7 +136,15 @@ class BookController extends AbstractController
 
         $selectStmt = $this->_conn->prepare($sqlSearch);
         $selectQ=$selectStmt->execute();
-        $res1=$selectQ->fetchAllAssociative();
+        $res1=$selectQ->fetchAllAssociative(); //All books returned
+
+        foreach($res1 as &$r)
+        {
+            $bookid=$r['bookid'];
+            
+            $tags=json_decode(file_get_contents("http://api/book/tags/$bookid"));
+            $r['tags']=$tags;
+        }
 
         $pageStmt = $this->_conn->prepare($sqlPage);
         $pageQ=$pageStmt->execute();
