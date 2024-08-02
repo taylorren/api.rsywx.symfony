@@ -22,7 +22,7 @@ class BookController extends AbstractController
         */
         $this->filter = ' location <>"na" and location <> "--"'; 
         //$this->filter=' 1=1';
-        $this->rpp = 5;
+        $this->rpp = 10;
     }
     public function summary(Connection $connection): JsonResponse
     {
@@ -121,11 +121,11 @@ class BookController extends AbstractController
 
         switch ($type) {
             case "title":
-                $sqlSearch="select * from book_book where title like $finalFilter and ".$this->filter." order by id desc limit $start, $this->rpp";
-                $sqlPage="select count(*) as bc from book_book where title like $finalFilter and ".$this->filter;
+                $sqlSearch="select * from book_book where title like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
+                $sqlPage="select count(*) as bc from book_book where title like $finalFilter and $this->filter";
                 break;
             case "author":
-                $sqlSearch="select * from book_book where author like $finalFilter and ".$this->filter." order by id desc limit $start, $this->rpp";
+                $sqlSearch="select * from book_book where author like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
                 $sqlPage="select count(*) as bc from book_book where author like $finalFilter and ".$this->filter;
                 break;
             case "tag":
@@ -142,6 +142,7 @@ class BookController extends AbstractController
         {
             $bookid=$r['bookid'];
             
+            //TODO: interesting to notice that you have to make an API call to get the result right!
             $tags=json_decode(file_get_contents("http://api/book/tags/$bookid"));
             $r['tags']=$tags;
         }
