@@ -10,6 +10,7 @@ use Symfony\Component\VarDumper\Cloner\AbstractCloner;
 
 class BookController extends AbstractController
 {
+    //TODO: Do we need to santize all the inputs
     private Connection $_conn;
     private $filter;
     private $rpp;
@@ -60,7 +61,7 @@ class BookController extends AbstractController
         $stmt = $this->_conn->prepare($sql);
         $q = $stmt->execute([":bookid" => $bookid]);
         $res = $q->fetchAssociative();
-
+        //TODO: Need to add a visit record for this book
         return new JsonResponse($res);
 
     }
@@ -143,6 +144,7 @@ class BookController extends AbstractController
             $bookid=$r['bookid'];
             
             //TODO: interesting to notice that you have to make an API call to get the result right!
+            //FIXME: Need to change the fixed api uri and put it in .env
             $tags=json_decode(file_get_contents("http://api/book/tags/$bookid"));
             $r['tags']=$tags;
         }
@@ -158,6 +160,7 @@ class BookController extends AbstractController
 
     public function today():JsonResponse
     {
+        //TODO: Shall I make this function call more flexible, i.e, by passing in the y/m/d?
         $sql="select * from book_book where month(purchdate)=:m and day(purchdate)=:d and year(purchdate)<>:y order by year(purchdate)";
         $y=date('Y');
         $m=date('m');
