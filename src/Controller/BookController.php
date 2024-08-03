@@ -126,7 +126,7 @@ class BookController extends AbstractController
                 break;
             case "author":
                 $sqlSearch="select * from book_book where author like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
-                $sqlPage="select count(*) as bc from book_book where author like $finalFilter and ".$this->filter;
+                $sqlPage="select count(*) as bc from book_book where author like $finalFilter and $this->filter";
                 break;
             case "tag":
                 break;
@@ -156,6 +156,23 @@ class BookController extends AbstractController
         return new JsonResponse(['books'=>$res1, 'pages'=> $totalPages]);
     }
 
+    public function today():JsonResponse
+    {
+        $sql="select * from book_book where month(purchdate)=:m and day(purchdate)=:d and year(purchdate)<>:y order by year(purchdate)";
+        $y=date('Y');
+        $m=date('m');
+        $d=date('d');
+
+        $stmt=$this->_conn->prepare($sql);
+        $q = $stmt->execute([
+            ":y"    =>  $y,
+            ":m"    =>  $m,
+            ":d"    =>  $d
+        ]);       
+        $res = $q->fetchAllAssociative();
+        
+        return new JsonResponse($res);
+    }
 
 
 }

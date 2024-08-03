@@ -40,6 +40,9 @@ book_list:
         type: 'title'
         value: '-'
         page: 1
+book_today:
+    path: /books/today
+    controller: App\Controller\BookController::today
 
 read_summary:
     path: /read/summary
