@@ -21,19 +21,19 @@ class BookController extends AbstractController
         2023年7月，搬家。所以扔掉了一些书。在数据库的处理上，将location设置为了na或者--，所以为了更好地进行藏书管理，
         对涉及书籍的数据库操作，都需要增加一个filter
         */
-        $this->filter = ' location <>"na" and location <> "--"'; 
+        $this->filter = ' b.location <>"na" and b.location <> "--"'; 
         //$this->filter=' 1=1';
         $this->rpp = 10;
     }
     public function summary(Connection $connection): JsonResponse
     {
-        $sql = "select count(id) bc, sum(page) pc, sum(kword) wc from book_book where" . $this->filter;
+        $sql = "select count(id) bc, sum(page) pc, sum(kword) wc from book_book b where $this->filter";
         $data = $this->_conn->fetchAssociative($sql);
         return new JsonResponse($data);
     }
     public function latest($count): JsonResponse
     {
-        $sql = "select title, bookid, author, region,  purchdate from book_book where" . $this->filter . " order by id desc limit 0, $count";
+        $sql = "select title, bookid, author, region,  purchdate from book_book b where $this->filter order by b.id desc limit 0, $count";
         $data = $this->_conn->fetchAllAssociative($sql);
         if ($count == 1) {
             $data = $data[0];
@@ -43,7 +43,7 @@ class BookController extends AbstractController
     }
     public function random($count): JsonResponse
     {
-        $sql = "select b.*, count(v.vid) vc, max(v.visitwhen) lvt from book_book b, book_visit v where b.id=v.bookid and" . $this->filter . " group by b.id order by rand() limit 0, $count";
+        $sql = "select b.*, count(v.vid) vc, max(v.visitwhen) lvt from book_book b, book_visit v where b.id=v.bookid and $this->filter group by b.id order by rand() limit 0, $count";
         $data = $this->_conn->fetchAllAssociative($sql);
 
         foreach ($data as &$r) {
@@ -113,23 +113,26 @@ class BookController extends AbstractController
         $sqlSearch = "";
         $sqlPage = "";
         
+        $value=htmlspecialchars($value);
+        $type=htmlspecialchars($type);
         if($value=='-') // match for all
         {
             $value='';
         }
 
         $finalFilter="'%$value%'";
-
         switch ($type) {
             case "title":
-                $sqlSearch="select * from book_book where title like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
-                $sqlPage="select count(*) as bc from book_book where title like $finalFilter and $this->filter";
+                $sqlSearch="select * from book_book b where title like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
+                $sqlPage="select count(*) as bc from book_book b where title like $finalFilter and $this->filter";
                 break;
             case "author":
-                $sqlSearch="select * from book_book where author like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
-                $sqlPage="select count(*) as bc from book_book where author like $finalFilter and $this->filter";
+                $sqlSearch="select * from book_book b where author like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
+                $sqlPage="select count(*) as bc from book_book b where author like $finalFilter and $this->filter";
                 break;
             case "tag":
+                $sqlSearch="select b.* from book_book b, book_taglist t where t.tag like $finalFilter and b.id=t.bid and $this->filter order by b.id desc limit $start, $this->rpp";
+                $sqlPage="select count(b.id) as bc from book_book b, book_taglist t where t.tag like $finalFilter and b.id=t.bid and $this->filter";
                 break;
             case "misc":
                 break;
