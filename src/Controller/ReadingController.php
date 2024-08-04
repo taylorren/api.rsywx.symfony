@@ -38,4 +38,21 @@ class ReadingController extends AbstractController
         }
         return new JsonResponse($data);
     }
+
+    public function list($page=1):JsonResponse
+    {
+        $countSql='select count(*) rc from book_review';
+        $countData = $this->_conn->fetchAssociative($countSql);
+        $count=$countData['rc'];
+        $rpp=9;
+        $totalPages=ceil($count/$rpp);
+        $start=($page-1)*$rpp;
+        $sql="select r.*, h.reviewtitle as review_title, h.create_at, b.title booktitle, b.bookid, b.author from book_book b, book_headline h, book_review r where h.bid=b.id and h.hid=r.hid order by r.id desc limit $start, $rpp";
+        $res = $this->_conn->fetchAllAssociative($sql);
+        foreach($res as &$r)
+        {
+            $r['img']="http://api/covers/{$r['bookid']}.jpg";
+        }
+        return new JsonResponse(['reviews'=>$res, 'pages'=>$totalPages]);
+    }
 }

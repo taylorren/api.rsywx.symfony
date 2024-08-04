@@ -54,6 +54,12 @@ read_latest:
         count: 1
     requirements:
         count: '\d+'
+read_list:
+    path: /read/list/{page}
+    controller: App\Controller\ReadingController::list
+    defaults:
+        page: 1
+
 blog_latest:
     path: /blog/latest/{count}
     controller: App\Controller\BlogController::latest
