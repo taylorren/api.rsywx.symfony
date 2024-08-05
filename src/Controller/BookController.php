@@ -61,9 +61,20 @@ class BookController extends AbstractController
         $stmt = $this->_conn->prepare($sql);
         $q = $stmt->execute([":bookid" => $bookid]);
         $res = $q->fetchAssociative();
-        //TODO: Need to add a visit record for this book
+        // Add a visit record for this book
+        $this->updateVisit($res['id']);
         return new JsonResponse($res);
 
+    }
+
+    private function updateVisit($id)
+    {
+        $when=new \DateTime();
+        $sql="insert into book_visit (bookid, visitwhen) value(:id, :when)";
+        $stmt = $this->_conn->prepare($sql);
+        $stmt->bindValue(":id", $id);
+        $stmt->bindValue(":when", $when->format("Y-m-d H:i:s"));
+        $stmt->execute();
     }
 
     public function tags($bookid): JsonResponse
