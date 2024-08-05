@@ -21,7 +21,7 @@ class BookController extends AbstractController
         2023年7月，搬家。所以扔掉了一些书。在数据库的处理上，将location设置为了na或者--，所以为了更好地进行藏书管理，
         对涉及书籍的数据库操作，都需要增加一个filter
         */
-        $this->filter = ' b.location <>"na" and b.location <> "--"'; 
+        $this->filter = ' b.location <>"na" and b.location <> "--"';
         //$this->filter=' 1=1';
         $this->rpp = 10;
     }
@@ -77,7 +77,7 @@ class BookController extends AbstractController
             $tags[] = $r['tag'];
         }
         return new JsonResponse($tags);
-        
+
     }
 
     public function addTags(Request $req): JsonResponse
@@ -109,74 +109,85 @@ class BookController extends AbstractController
 
     public function list($type, $value, $page): JsonResponse
     {
-        $start=($page-1)*$this->rpp;
+        $start = ($page - 1) * $this->rpp;
         $sqlSearch = "";
         $sqlPage = "";
-        
-        $value=htmlspecialchars($value);
-        $type=htmlspecialchars($type);
-        if($value=='-') // match for all
+
+        $value = htmlspecialchars($value);
+        $type = htmlspecialchars($type);
+        if ($value == '-') // match for all
         {
-            $value='';
+            $value = '';
         }
 
-        $finalFilter="'%$value%'";
+        $finalFilter = "'%$value%'";
         switch ($type) {
             case "title":
-                $sqlSearch="select * from book_book b where title like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
-                $sqlPage="select count(*) as bc from book_book b where title like $finalFilter and $this->filter";
+                $sqlSearch = "select * from book_book b where title like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
+                $sqlPage = "select count(*) as bc from book_book b where title like $finalFilter and $this->filter";
                 break;
             case "author":
-                $sqlSearch="select * from book_book b where author like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
-                $sqlPage="select count(*) as bc from book_book b where author like $finalFilter and $this->filter";
+                $sqlSearch = "select * from book_book b where author like $finalFilter and $this->filter order by id desc limit $start, $this->rpp";
+                $sqlPage = "select count(*) as bc from book_book b where author like $finalFilter and $this->filter";
                 break;
             case "tag":
-                $sqlSearch="select b.* from book_book b, book_taglist t where t.tag like $finalFilter and b.id=t.bid and $this->filter order by b.id desc limit $start, $this->rpp";
-                $sqlPage="select count(b.id) as bc from book_book b, book_taglist t where t.tag like $finalFilter and b.id=t.bid and $this->filter";
+                $sqlSearch = "select b.* from book_book b, book_taglist t where t.tag like $finalFilter and b.id=t.bid and $this->filter order by b.id desc limit $start, $this->rpp";
+                $sqlPage = "select count(b.id) as bc from book_book b, book_taglist t where t.tag like $finalFilter and b.id=t.bid and $this->filter";
                 break;
             case "misc":
+                $sqlPage = "select count(b.id) bc from book_book b "
+                    . "where title like $finalFilter "
+                    . "or author like $finalFilter "
+                    . "or id in (select bid from book_taglist where tag like $finalFilter)"
+                    . " and $this->filter";
+                $sqlSearch = "select b.* from book_book b " 
+                    . "where title like $finalFilter "
+                    . "or author like $finalFilter  "
+                    . "or id in (select bid from book_taglist where tag like $finalFilter) "
+                    . " and $this->filter "
+                    . " order by id desc "
+                    . " limit $start, $this->rpp";
+
                 break;
         }
-
         $selectStmt = $this->_conn->prepare($sqlSearch);
-        $selectQ=$selectStmt->execute();
-        $res1=$selectQ->fetchAllAssociative(); //All books returned
+        $selectQ = $selectStmt->execute();
+        $res1 = $selectQ->fetchAllAssociative(); //All books returned
+        
+        foreach ($res1 as &$r) {
+            $bookid = $r['bookid'];
 
-        foreach($res1 as &$r)
-        {
-            $bookid=$r['bookid'];
-            
             //TODO: interesting to notice that you have to make an API call to get the result right!
             //FIXME: Need to change the fixed api uri and put it in .env
-            $tags=json_decode(file_get_contents("http://api/book/tags/$bookid"));
-            $r['tags']=$tags;
+            $tags = json_decode(file_get_contents("http://api/book/tags/$bookid"));
+            $r['tags'] = $tags;
         }
 
         $pageStmt = $this->_conn->prepare($sqlPage);
-        $pageQ=$pageStmt->execute();
-        $res2=$pageQ->fetchAssociative();
-        $books_count=$res2['bc'];
-        $totalPages=ceil($books_count/$this->rpp);
+        $pageQ = $pageStmt->execute();
+        $res2 = $pageQ->fetchAssociative();
+        $books_count = $res2['bc'];
+        $totalPages = ceil($books_count / $this->rpp);
 
-        return new JsonResponse(['books'=>$res1, 'pages'=> $totalPages]);
+        return new JsonResponse(['books' => $res1, 'pages' => $totalPages]);
     }
 
-    public function today():JsonResponse
+    public function today(): JsonResponse
     {
         //TODO: Shall I make this function call more flexible, i.e, by passing in the y/m/d?
-        $sql="select * from book_book where month(purchdate)=:m and day(purchdate)=:d and year(purchdate)<>:y order by year(purchdate)";
-        $y=date('Y');
-        $m=date('m');
-        $d=date('d');
+        $sql = "select * from book_book where month(purchdate)=:m and day(purchdate)=:d and year(purchdate)<>:y order by year(purchdate)";
+        $y = date('Y');
+        $m = date('m');
+        $d = date('d');
 
-        $stmt=$this->_conn->prepare($sql);
+        $stmt = $this->_conn->prepare($sql);
         $q = $stmt->execute([
-            ":y"    =>  $y,
-            ":m"    =>  $m,
-            ":d"    =>  $d
-        ]);       
+            ":y" => $y,
+            ":m" => $m,
+            ":d" => $d
+        ]);
         $res = $q->fetchAllAssociative();
-        
+
         return new JsonResponse($res);
     }
 
