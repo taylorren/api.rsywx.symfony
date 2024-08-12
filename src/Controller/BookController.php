@@ -59,7 +59,7 @@ class BookController extends AbstractController
     {
         $sql = "select b.*, pub.name pu_name, pl.name pu_place, count(v.vid) vc, max(v.visitwhen) lvt from book_book b, book_visit v, book_publisher pub, book_place pl where b.bookid=:bookid and pub.id=b.publisher and pl.id=b.place and v.bookid=b.id group by v.bookid";
         $stmt = $this->_conn->prepare($sql);
-        $q = $stmt->execute([":bookid" => $bookid]);
+        $q = $stmt->executeQuery([":bookid" => $bookid]);
         $res = $q->fetchAssociative();
         // Add a visit record for this book
         $this->updateVisit($res['id']);
@@ -74,14 +74,14 @@ class BookController extends AbstractController
         $stmt = $this->_conn->prepare($sql);
         $stmt->bindValue(":id", $id);
         $stmt->bindValue(":when", $when->format("Y-m-d H:i:s"));
-        $stmt->execute();
+        $stmt->executeStatement();
     }
 
     public function tags($bookid): JsonResponse
     {
         $sql = "SELECT t.tag FROM book_taglist t, book_book b where b.id=t.bid and b.bookid=:bookid";
         $stmt = $this->_conn->prepare($sql);
-        $q = $stmt->execute([":bookid" => $bookid]);
+        $q = $stmt->executeQuery([":bookid" => $bookid]);
         $res = $q->fetchAllAssociative();
         $tags = [];
         foreach ($res as $r) {
@@ -100,7 +100,7 @@ class BookController extends AbstractController
 
         $insertSql = "insert into book_taglist (bid, tag) values (:id, :tag)";
         $stmtInsert = $this->_conn->prepare($insertSql);
-        $q = $stmt->execute([':id' => $id]);
+        $q = $stmt->executeQuery([':id' => $id]);
         $res = $q->fetchAllAssociative(); // Current tags
 
         $current_tags = [];
@@ -111,7 +111,7 @@ class BookController extends AbstractController
         $newTagList = explode(' ', $tags);
         foreach ($newTagList as $tag) {
             if (!in_array($tag, $current_tags)) {
-                $q = $stmtInsert->execute([':id' => $id, ':tag' => $tag]);
+                $q = $stmtInsert->executeQuery([':id' => $id, ':tag' => $tag]);
             }
         }
 
@@ -162,7 +162,7 @@ class BookController extends AbstractController
                 break;
         }
         $selectStmt = $this->_conn->prepare($sqlSearch);
-        $selectQ = $selectStmt->execute();
+        $selectQ = $selectStmt->executeQuery();
         $res1 = $selectQ->fetchAllAssociative(); //All books returned
         
         foreach ($res1 as &$r) {
@@ -175,7 +175,7 @@ class BookController extends AbstractController
         }
 
         $pageStmt = $this->_conn->prepare($sqlPage);
-        $pageQ = $pageStmt->execute();
+        $pageQ = $pageStmt->executeQuery();
         $res2 = $pageQ->fetchAssociative();
         $books_count = $res2['bc'];
         $totalPages = ceil($books_count / $this->rpp);
@@ -192,7 +192,7 @@ class BookController extends AbstractController
         $d = date('d');
 
         $stmt = $this->_conn->prepare($sql);
-        $q = $stmt->execute([
+        $q = $stmt->executeQuery([
             ":y" => $y,
             ":m" => $m,
             ":d" => $d

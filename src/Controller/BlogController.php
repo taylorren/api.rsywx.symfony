@@ -65,7 +65,7 @@ and wpp.post_status='publish'
 order by wpp.id
 ";
         $stmt = $this->_conn->prepare($sql);
-        $q = $stmt->execute([":m" => $m, ":d" => $d, ":y" => $y]);
+        $q = $stmt->executeQuery([":m" => $m, ":d" => $d, ":y" => $y]);
         $res = $q->fetchAllAssociative();
         return new JsonResponse($res);
 
