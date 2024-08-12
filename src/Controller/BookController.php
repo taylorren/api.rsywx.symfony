@@ -170,7 +170,7 @@ class BookController extends AbstractController
 
             //TODO: interesting to notice that you have to make an API call to get the result right!
             //FIXME: Need to change the fixed api uri and put it in .env
-            $tags = json_decode(file_get_contents("http://api/book/tags/$bookid"));
+            $tags = json_decode(file_get_contents("https://api.rsywx.com/book/tags/$bookid"));
             $r['tags'] = $tags;
         }
 
