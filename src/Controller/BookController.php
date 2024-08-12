@@ -48,7 +48,7 @@ class BookController extends AbstractController
 
         foreach ($data as &$r) {
             $img_uri = $r['bookid'];
-            $r['img'] = "http://api/covers/$img_uri.jpg";
+            $r['img'] = "https://api.rsywx.com/covers/$img_uri.jpg";
         }
 
 

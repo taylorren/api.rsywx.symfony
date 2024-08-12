@@ -51,7 +51,7 @@ class ReadingController extends AbstractController
         $res = $this->_conn->fetchAllAssociative($sql);
         foreach($res as &$r)
         {
-            $r['img']="http://api/covers/{$r['bookid']}.jpg";
+            $r['img']="https://api.rsywx.com/covers/{$r['bookid']}.jpg";
         }
         return new JsonResponse(['reviews'=>$res, 'pages'=>$totalPages]);
     }
