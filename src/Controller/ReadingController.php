@@ -39,7 +39,7 @@ class ReadingController extends AbstractController
         return new JsonResponse($data);
     }
 
-    public function list($page=1):JsonResponse
+    public function list($page=1, $base_uri):JsonResponse
     {
         $countSql='select count(*) rc from book_review';
         $countData = $this->_conn->fetchAssociative($countSql);
@@ -51,7 +51,7 @@ class ReadingController extends AbstractController
         $res = $this->_conn->fetchAllAssociative($sql);
         foreach($res as &$r)
         {
-            $r['img']="https://api.rsywx.com/covers/{$r['bookid']}.jpg";
+            $r['img']="$base_uri/covers/{$r['bookid']}.jpg";
         }
         return new JsonResponse(['reviews'=>$res, 'pages'=>$totalPages]);
     }

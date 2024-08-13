@@ -41,14 +41,14 @@ class BookController extends AbstractController
 
         return new JsonResponse($data);
     }
-    public function random($count): JsonResponse
+    public function random($count, $base_uri): JsonResponse
     {
         $sql = "select b.*, count(v.vid) vc, max(v.visitwhen) lvt from book_book b, book_visit v where b.id=v.bookid and $this->filter group by b.id order by rand() limit 0, $count";
         $data = $this->_conn->fetchAllAssociative($sql);
 
         foreach ($data as &$r) {
             $img_uri = $r['bookid'];
-            $r['img'] = "https://api.rsywx.com/covers/$img_uri.jpg";
+            $r['img'] = "$base_uri/covers/$img_uri.jpg";
         }
 
 
@@ -118,7 +118,7 @@ class BookController extends AbstractController
         return new JsonResponse(['status' => 'success']);
     }
 
-    public function list($type, $value, $page): JsonResponse
+    public function list($type, $value, $page, $base_uri): JsonResponse
     {
         $start = ($page - 1) * $this->rpp;
         $sqlSearch = "";
@@ -170,7 +170,7 @@ class BookController extends AbstractController
 
             //TODO: interesting to notice that you have to make an API call to get the result right!
             //FIXME: Need to change the fixed api uri and put it in .env
-            $tags = json_decode(file_get_contents("https://api.rsywx.com/book/tags/$bookid"));
+            $tags = json_decode(file_get_contents("$base_uri/book/tags/$bookid"));
             $r['tags'] = $tags;
         }
 
