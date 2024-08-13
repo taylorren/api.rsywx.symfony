@@ -63,14 +63,24 @@ class BookController extends AbstractController
         $res = $q->fetchAssociative();
         // Add a visit record for this book
         $this->updateVisit($res['id']);
+
+        $sql2 = "select r.title rt, r.datein, r.uri, b.title bt
+                from book_headline h, book_review r, book_book b
+                where h.hid=r.hid
+                and h.bid=b.id
+                and b.bookid=:bookid";
+        $stmt2 = $this->_conn->prepare($sql2);
+        $q2 = $stmt2->executeQuery([":bookid"=> $bookid]);
+        $res2 = $q2->fetchAllAssociative();
+        $res['reviews']= $res2;
         return new JsonResponse($res);
 
     }
 
     private function updateVisit($id)
     {
-        $when=new \DateTime();
-        $sql="insert into book_visit (bookid, visitwhen) value(:id, :when)";
+        $when = new \DateTime();
+        $sql = "insert into book_visit (bookid, visitwhen) value(:id, :when)";
         $stmt = $this->_conn->prepare($sql);
         $stmt->bindValue(":id", $id);
         $stmt->bindValue(":when", $when->format("Y-m-d H:i:s"));
@@ -151,7 +161,7 @@ class BookController extends AbstractController
                     . "or author like $finalFilter "
                     . "or id in (select bid from book_taglist where tag like $finalFilter)"
                     . " and $this->filter";
-                $sqlSearch = "select b.* from book_book b " 
+                $sqlSearch = "select b.* from book_book b "
                     . "where title like $finalFilter "
                     . "or author like $finalFilter  "
                     . "or id in (select bid from book_taglist where tag like $finalFilter) "
@@ -164,7 +174,7 @@ class BookController extends AbstractController
         $selectStmt = $this->_conn->prepare($sqlSearch);
         $selectQ = $selectStmt->executeQuery();
         $res1 = $selectQ->fetchAllAssociative(); //All books returned
-        
+
         foreach ($res1 as &$r) {
             $bookid = $r['bookid'];
 
