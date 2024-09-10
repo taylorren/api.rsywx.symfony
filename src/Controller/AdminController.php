@@ -32,4 +32,20 @@ order by vd";
         return new JsonResponse($res);   
     }
 
+    public function hotBooks(): JsonResponse
+    {
+        $sql="SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt FROM book_book b, book_visit v
+where b.id=v.bookid
+group by b.id
+order by vc desc 
+limit 0, 20";
+
+        $stmt=$this->_conn->prepare($sql);
+        $q=$stmt->executeQuery();
+        $res = $q->fetchAllAssociative();
+        
+        return new JsonResponse($res);   
+
+    }
+
 }
