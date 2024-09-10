@@ -75,3 +75,8 @@ qotd:
     path: /qotd
     controller: App\Controller\DefaultController::qotd
     
+admin_visit_by_day:
+    path: /admin/visitByDay
+    controller: App\Controller\AdminController::visitByDay
+    defaults:
+        span: 14        

@@ -70,9 +70,9 @@ class BookController extends AbstractController
                 and h.bid=b.id
                 and b.bookid=:bookid";
         $stmt2 = $this->_conn->prepare($sql2);
-        $q2 = $stmt2->executeQuery([":bookid"=> $bookid]);
+        $q2 = $stmt2->executeQuery([":bookid" => $bookid]);
         $res2 = $q2->fetchAllAssociative();
-        $res['reviews']= $res2;
+        $res['reviews'] = $res2;
         return new JsonResponse($res);
 
     }
@@ -212,5 +212,17 @@ class BookController extends AbstractController
         return new JsonResponse($res);
     }
 
+    public function visitByDay($span = 14): JsonResponse
+    {
+        $sql = "SELECT count(vid) vc, date(visitwhen) vd
+FROM book_visit 
+where date(visitwhen) >=date_sub(now(), interval $span day)
+group by vd
+order by vd desc ";
+        $stmt=$this->_conn->prepare($sql);
+        $q=$stmt->executeQuery();
+        $res = $q->fetchAllAssociative();
+        return new JsonResponse($res);   
+    }
 
 }
