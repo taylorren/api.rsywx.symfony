@@ -25,7 +25,7 @@ class AdminController extends AbstractController
 FROM book_visit 
 where date(visitwhen) >=date_sub(now(), interval $span day)
 group by vd
-order by vd desc ";
+order by vd";
         $stmt=$this->_conn->prepare($sql);
         $q=$stmt->executeQuery();
         $res = $q->fetchAllAssociative();
