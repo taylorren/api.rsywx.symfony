@@ -83,4 +83,12 @@ admin_visit_by_day:
 admin_hot_books:
     path: /admin/hotbooks
     controller: App\Controller\AdminController::hotBooks
-    
+admin_cold_books:
+    path: /admin/coldbooks
+    controller: App\Controller\AdminController::coldBooks
+admin_recent_books:
+    path: /admin/recentbooks
+    controller: App\Controller\AdminController::recentBooks
+admin_forget_books:
+    path: /admin/forgetbooks
+    controller: App\Controller\AdminController::forgetBooks

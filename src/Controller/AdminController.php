@@ -45,7 +45,50 @@ limit 0, 20";
         $res = $q->fetchAllAssociative();
         
         return new JsonResponse($res);   
+    }
+    
+    public function coldBooks(): JsonResponse
+    {
+        $sql = "SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt FROM book_book b
+        LEFT JOIN book_visit v ON b.id = v.bookid
+        GROUP BY b.id
+        ORDER BY vc ASC 
+        LIMIT 0, 20";
 
+        $stmt = $this->_conn->prepare($sql);
+        $q = $stmt->executeQuery();
+        $res = $q->fetchAllAssociative();
+        
+        return new JsonResponse($res);   
     }
 
+    public function recentBooks():JsonResponse
+    {
+        $sql = "SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt FROM book_book b, book_visit v
+        where b.id=v.bookid
+        group by b.id
+        order by lvt desc
+        limit 0, 20";
+
+        $stmt = $this->_conn->prepare($sql);
+        $q = $stmt->executeQuery();
+        $res = $q->fetchAllAssociative();
+
+        return new JsonResponse($res);   
+    }
+
+    public function forgetBooks():JsonResponse
+    {
+        $sql = "SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt FROM book_book b, book_visit v
+        where b.id=v.bookid
+        group by b.id
+        order by lvt
+        limit 0, 20";
+
+        $stmt = $this->_conn->prepare($sql);
+        $q = $stmt->executeQuery();
+        $res = $q->fetchAllAssociative();
+
+        return new JsonResponse($res);   
+    }
 }
