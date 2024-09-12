@@ -57,10 +57,15 @@ class BookController extends AbstractController
 
     public function detail($bookid): JsonResponse
     {
-        $sql = "select b.*, pub.name pu_name, pl.name pu_place, count(v.vid) vc, max(v.visitwhen) lvt from book_book b, book_visit v, book_publisher pub, book_place pl where b.bookid=:bookid and pub.id=b.publisher and pl.id=b.place and v.bookid=b.id group by v.bookid";
+        $sql = "select b.*, pub.name pu_name, pl.name pu_place, count(v.vid) vc, max(v.visitwhen) lvt from book_book b, book_visit v, book_publisher pub, book_place pl where b.bookid=:bookid and pub.id=b.publisher and pl.id=b.place and v.bookid=b.id and ".$this->filter. " group by v.bookid";
         $stmt = $this->_conn->prepare($sql);
         $q = $stmt->executeQuery([":bookid" => $bookid]);
         $res = $q->fetchAssociative();
+
+        if(!$res) // Not found
+        {
+            return new JsonResponse(false);
+        }
         // Add a visit record for this book
         $this->updateVisit($res['id']);
 
