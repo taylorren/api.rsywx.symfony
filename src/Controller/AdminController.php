@@ -11,9 +11,12 @@ use Symfony\Component\VarDumper\Cloner\AbstractCloner;
 class AdminController extends AbstractController
 {
     private Connection $_conn;
+    private $filter;
+
     public function __construct(Connection $connection)
     {
         $this->_conn = $connection;
+        $this->filter = ' b.location <>"na" and b.location <> "--"';
         /*
         2023年7月，搬家。所以扔掉了一些书。在数据库的处理上，将location设置为了na或者--，所以为了更好地进行藏书管理，
         对涉及书籍的数据库操作，都需要增加一个filter
@@ -50,7 +53,7 @@ limit 0, 20";
     public function coldBooks(): JsonResponse
     {
         $sql = "SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt FROM book_book b
-        LEFT JOIN book_visit v ON b.id = v.bookid
+        LEFT JOIN book_visit v ON b.id = v.bookid where ".$this->filter." 
         GROUP BY b.id
         ORDER BY vc ASC 
         LIMIT 0, 20";
@@ -80,7 +83,7 @@ limit 0, 20";
     public function forgetBooks():JsonResponse
     {
         $sql = "SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt FROM book_book b, book_visit v
-        where b.id=v.bookid
+        where b.id=v.bookid and ".$this->filter." 
         group by b.id
         order by lvt
         limit 0, 20";
