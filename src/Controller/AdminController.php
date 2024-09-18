@@ -22,7 +22,7 @@ class AdminController extends AbstractController
         对涉及书籍的数据库操作，都需要增加一个filter
         */
     }
-    public function visitByDay($span = 14): JsonResponse
+    public function visitByDay($span = 30): JsonResponse
     {
         $sql = "SELECT count(vid) vc, date(visitwhen) vd
 FROM book_visit 

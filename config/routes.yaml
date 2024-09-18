@@ -79,7 +79,7 @@ admin_visit_by_day:
     path: /admin/visitByDay
     controller: App\Controller\AdminController::visitByDay
     defaults:
-        span: 14        
+        span: 30       
 admin_hot_books:
     path: /admin/hotbooks
     controller: App\Controller\AdminController::hotBooks
