@@ -39,7 +39,7 @@ class ReadingController extends AbstractController
         return new JsonResponse($data);
     }
 
-    public function list($page=1, $base_uri):JsonResponse
+    public function list($base_uri, $page=1):JsonResponse
     {
         $countSql='select count(*) rc from book_review';
         $countData = $this->_conn->fetchAssociative($countSql);

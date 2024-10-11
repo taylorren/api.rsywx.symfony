@@ -92,3 +92,7 @@ admin_recent_books:
 admin_forget_books:
     path: /admin/forgetbooks
     controller: App\Controller\AdminController::forgetBooks
+
+lakers:
+    path: /lakers/{season}
+    controller: App\Controller\MiscController::lakers
