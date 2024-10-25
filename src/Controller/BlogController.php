@@ -17,7 +17,7 @@ class BlogController extends AbstractController
         $this->_conn = $blogManager->getConnection();
     }
 
-    public function latest($count = 1): JsonResponse
+    public function latest(int $count = 1): JsonResponse
     {
         $sql = "select wp.post_date pd, wp.post_excerpt excerpt, wpm2.meta_value media, wp.guid link, wp.post_title title
 from wp_postmeta wpm1, wp_postmeta wpm2, wp_posts wp
@@ -46,7 +46,7 @@ limit 0, $count";
         return new JsonResponse($summary);
     }
 
-    public function today()
+    public function today():JsonResponse
     {
         $today = new \DateTime();
         $m = $today->format('m');

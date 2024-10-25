@@ -11,7 +11,7 @@ use Symfony\Component\VarDumper\Cloner\AbstractCloner;
 class AdminController extends AbstractController
 {
     private Connection $_conn;
-    private $filter;
+    private string $filter;
 
     public function __construct(Connection $connection)
     {
@@ -22,7 +22,8 @@ class AdminController extends AbstractController
         对涉及书籍的数据库操作，都需要增加一个filter
         */
     }
-    public function visitByDay($span = 30): JsonResponse
+    
+    public function visitByDay(int $span = 30): JsonResponse
     {
         $sql = "SELECT count(vid) vc, date(visitwhen) vd
 FROM book_visit 

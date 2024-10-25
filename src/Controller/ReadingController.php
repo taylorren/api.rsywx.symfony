@@ -26,7 +26,8 @@ class ReadingController extends AbstractController
 
         return new JsonResponse($res);
     }
-    public function latest($count=1): JsonResponse
+
+    public function latest(int $count=1): JsonResponse
     {
         $sql = 'select h.*, r.*, b.title as book_title, b.bookid as book_bookid from book_headline as h, book_review as r, book_book as b where r.hid=h.hid and h.bid=b.id  order by r.datein desc limit 0,  ' . $count;
 
@@ -39,7 +40,7 @@ class ReadingController extends AbstractController
         return new JsonResponse($data);
     }
 
-    public function list($base_uri, $page=1):JsonResponse
+    public function list(string $base_uri, int $page=1):JsonResponse
     {
         $countSql='select count(*) rc from book_review';
         $countData = $this->_conn->fetchAssociative($countSql);

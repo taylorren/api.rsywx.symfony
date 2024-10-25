@@ -12,8 +12,8 @@ class BookController extends AbstractController
 {
     //TODO: Do we need to santize all the inputs
     private Connection $_conn;
-    private $filter;
-    private $rpp;
+    private string $filter;
+    private int $rpp;
     public function __construct(Connection $connection)
     {
         $this->_conn = $connection;
@@ -31,7 +31,7 @@ class BookController extends AbstractController
         $data = $this->_conn->fetchAssociative($sql);
         return new JsonResponse($data);
     }
-    public function latest($count): JsonResponse
+    public function latest(int $count): JsonResponse
     {
         $sql = "select title, bookid, author, region,  purchdate from book_book b where $this->filter order by b.id desc limit 0, $count";
         $data = $this->_conn->fetchAllAssociative($sql);
@@ -41,7 +41,7 @@ class BookController extends AbstractController
 
         return new JsonResponse($data);
     }
-    public function random($count, $base_uri): JsonResponse
+    public function random(int $count, string $base_uri): JsonResponse
     {
         $sql = "select b.*, count(v.vid) vc, max(v.visitwhen) lvt from book_book b, book_visit v where b.id=v.bookid and $this->filter group by b.id order by rand() limit 0, $count";
         $data = $this->_conn->fetchAllAssociative($sql);
@@ -55,7 +55,7 @@ class BookController extends AbstractController
         return new JsonResponse($data);
     }
 
-    public function detail($bookid): JsonResponse
+    public function detail(string $bookid): JsonResponse
     {
         $sql = "select b.*, pub.name pu_name, pl.name pu_place, count(v.vid) vc, max(v.visitwhen) lvt from book_book b, book_visit v, book_publisher pub, book_place pl where b.bookid=:bookid and pub.id=b.publisher and pl.id=b.place and v.bookid=b.id and ".$this->filter. " group by v.bookid";
         $stmt = $this->_conn->prepare($sql);
@@ -82,7 +82,7 @@ class BookController extends AbstractController
 
     }
 
-    private function updateVisit($id)
+    private function updateVisit(string $id):void
     {
         $when = new \DateTime();
         $sql = "insert into book_visit (bookid, visitwhen) value(:id, :when)";
@@ -92,7 +92,7 @@ class BookController extends AbstractController
         $stmt->executeStatement();
     }
 
-    public function tags($bookid): JsonResponse
+    public function tags(string $bookid): JsonResponse
     {
         $sql = "SELECT t.tag FROM book_taglist t, book_book b where b.id=t.bid and b.bookid=:bookid";
         $stmt = $this->_conn->prepare($sql);
@@ -133,7 +133,7 @@ class BookController extends AbstractController
         return new JsonResponse(['status' => 'success']);
     }
 
-    public function list($type, $value, $page, $base_uri): JsonResponse
+    public function list(string $type, string $value, int $page, string $base_uri): JsonResponse
     {
         $start = ($page - 1) * $this->rpp;
         $sqlSearch = "";

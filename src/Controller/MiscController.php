@@ -14,8 +14,10 @@ class MiscController extends AbstractController
     {
         $this->_conn = $connection;
     }
-
-    public function lakers($season)
+    /**
+     * @return array<mixed>
+     */
+    private function _getWinLose(int $season):array
     {
         $win_lose_sql = "SELECT 
     SUM(CASE WHEN winlose = 'W' THEN 1 ELSE 0 END) AS win,
@@ -28,8 +30,9 @@ WHERE
         $stmt = $this->_conn->prepare($win_lose_sql);
         $q = $stmt->executeQuery([":season" => $season]);
         $res = $q->fetchAssociative();
-        $win=$res['win'];
-        $loss=$res['loss'];
+        
+        $win=(int)$res['win'];
+        $loss=(int)$res['loss'];
         $total=$win+$loss;
         $per=0;
         if($total!=0)
@@ -41,6 +44,13 @@ WHERE
         $summary['win']=$win;
         $summary['loss']=$loss;
         $summary['per']=$per;
+
+        return $summary;
+    }
+
+    public function lakers(int $season):JsonResponse
+    {
+        $summary=$this->_getWinLose($season);    
 
         $data=[];
         $data['summary']=$summary;
