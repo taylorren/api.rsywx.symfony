@@ -47,14 +47,37 @@ WHERE
 
         return $summary;
     }
+    /**
+     * @return array<mixed>
+     */
+    private function _getGames(int $span): array
+    {
+        $currentDate = new \DateTime();
+        // $pastDate = $currentDate->modify("-$span days")->format('Y-m-d');
+        // $futureDate = $currentDate->modify("+$span days")->format('Y-m-d');
+
+        $games_sql = "SELECT * FROM lakers
+        where dateplayed between date_sub(now(), interval $span day) and date_add(now(), interval $span day)
+        order by dateplayed";
+        
+        $stmt = $this->_conn->prepare($games_sql);
+        
+        //$q=$stmt->executeQuery([':pastDate' => $pastDate, ':futureDate' => $futureDate]);
+        $q=$stmt->executeQuery();
+        $games = $q->fetchAllAssociative();
+
+        return $games;
+    }
 
     public function lakers(int $season):JsonResponse
     {
-        $summary=$this->_getWinLose($season);    
+        $summary=$this->_getWinLose($season);
+        $games=$this->_getGames(14);
 
         $data=[];
         $data['summary']=$summary;
+        $data['games']=$games;
+
         return new JsonResponse($data);
     }
 }
-

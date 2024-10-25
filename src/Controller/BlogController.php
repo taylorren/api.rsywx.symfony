@@ -13,8 +13,13 @@ class BlogController extends AbstractController
     private Connection $_conn;
     public function __construct(ManagerRegistry $doctrine)
     {
-        $blogManager = $doctrine->getManager('blog');
-        $this->_conn = $blogManager->getConnection();
+        // 确保获取的是 EntityManager 实例
+        $blogManager = $doctrine->getManager('blog'); // 确保 'blog' 是正确的实体管理器名称
+        if ($blogManager instanceof \Doctrine\ORM\EntityManagerInterface) {
+            $this->_conn = $blogManager->getConnection(); // 这里调用 getConnection()
+        } else {
+            throw new \Exception('Invalid EntityManager returned');
+        }
     }
 
     public function latest(int $count = 1): JsonResponse
