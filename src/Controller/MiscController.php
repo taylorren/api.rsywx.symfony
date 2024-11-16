@@ -80,4 +80,19 @@ WHERE
 
         return new JsonResponse($data);
     }
+
+    public function wotd(): JsonResponse
+    {
+        $sql = "SELECT word, meaning, sentence, type FROM wotd ORDER BY RAND() LIMIT 1";
+        $stmt = $this->_conn->prepare($sql);
+        $q = $stmt->executeQuery();
+        $word = $q->fetchAssociative();
+
+        return new JsonResponse([
+            'word' => $word['word'],
+            'meaning' => $word['meaning'],
+            'sentence' => $word['sentence'],
+            'type' => $word['type']
+        ]);
+    }
 }

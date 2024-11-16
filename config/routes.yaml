@@ -54,6 +54,9 @@ read_latest:
         count: 1
     requirements:
         count: '\d+'
+wotd:
+    path: /misc/wotd
+    controller: App\Controller\MiscController::wotd
 read_list:
     path: /read/list/{page}
     controller: App\Controller\ReadingController::list
