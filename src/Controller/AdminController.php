@@ -68,17 +68,30 @@ limit 0, 20";
 
     public function recentBooks():JsonResponse
     {
-        $sql = "SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt, v.city FROM book_book b, book_visit v
-        where b.id=v.bookid
-        group by b.id
-        order by lvt desc
-        limit 0, 20";
+        // First get the recent books
+        $sql = "SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt 
+        FROM book_book b 
+        JOIN book_visit v ON b.id = v.bookid 
+        GROUP BY b.id
+        ORDER BY lvt DESC 
+        LIMIT 0, 20";
 
         $stmt = $this->_conn->prepare($sql);
         $q = $stmt->executeQuery();
-        $res = $q->fetchAllAssociative();
+        $books = $q->fetchAllAssociative();
 
-        return new JsonResponse($res);   
+        // Then get the city for each book's last visit
+        foreach ($books as &$book) {
+            $sql = "SELECT city FROM book_visit 
+                   WHERE bookid = ? AND visitwhen = ? 
+                   LIMIT 1";
+            $stmt = $this->_conn->prepare($sql);
+            $q = $stmt->executeQuery([$book['bookid'], $book['lvt']]);
+            $result = $q->fetchAssociative();
+            $book['city'] = $result ? $result['city'] : null;
+        }
+
+        return new JsonResponse($books);   
     }
 
     public function forgetBooks():JsonResponse
