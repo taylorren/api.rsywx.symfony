@@ -7,6 +7,7 @@ use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\VarDumper\Cloner\AbstractCloner;
+use GeoIp2\Database\Reader;
 
 class BookController extends AbstractController
 {
@@ -85,10 +86,26 @@ class BookController extends AbstractController
     private function updateVisit(string $id):void
     {
         $when = new \DateTime();
-        $sql = "insert into book_visit (bookid, visitwhen) value(:id, :when)";
+        
+        // Get visitor's IP address
+        $request = Request::createFromGlobals();
+        $ip = $request->getClientIp();
+        
+        // Get geolocation data using ip-api.com
+        $geo_data = @file_get_contents("http://ip-api.com/json/{$ip}");
+        $geo_info = json_decode($geo_data, true);
+        
+        $sql = "insert into book_visit (bookid, visitwhen, ip_address, country, city, region) 
+                values (:id, :when, :ip, :country, :city, :region)";
+                
         $stmt = $this->_conn->prepare($sql);
         $stmt->bindValue(":id", $id);
         $stmt->bindValue(":when", $when->format("Y-m-d H:i:s"));
+        $stmt->bindValue(":ip", $ip);
+        $stmt->bindValue(":country", ($geo_info['status'] ?? '') === 'success' ? $geo_info['country'] : 'Unknown');
+        $stmt->bindValue(":city", ($geo_info['status'] ?? '') === 'success' ? $geo_info['city'] : 'Unknown');
+        $stmt->bindValue(":region", ($geo_info['status'] ?? '') === 'success' ? $geo_info['regionName'] : 'Unknown');
+        
         $stmt->executeStatement();
     }
 
