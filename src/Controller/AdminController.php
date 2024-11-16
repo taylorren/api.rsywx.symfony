@@ -68,7 +68,7 @@ limit 0, 20";
 
     public function recentBooks():JsonResponse
     {
-        $sql = "SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt FROM book_book b, book_visit v
+        $sql = "SELECT b.title, b.bookid, count(v.vid) vc, max(v.visitwhen) lvt, v.city FROM book_book b, book_visit v
         where b.id=v.bookid
         group by b.id
         order by lvt desc
