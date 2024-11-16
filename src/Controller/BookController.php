@@ -87,13 +87,12 @@ class BookController extends AbstractController
     {
         $when = new \DateTime();
         
-        // Get visitor's IP address
+        // Get visitor's information from request parameters
         $request = Request::createFromGlobals();
-        $ip = $request->getClientIp();
-        
-        // Get geolocation data using ip-api.com
-        $geo_data = @file_get_contents("http://ip-api.com/json/{$ip}");
-        $geo_info = json_decode($geo_data, true);
+        $ip = $request->query->get('ip', 'Unknown');
+        $country = $request->query->get('country', 'Unknown');
+        $city = $request->query->get('city', 'Unknown');
+        $region = $request->query->get('region', 'Unknown');
         
         $sql = "insert into book_visit (bookid, visitwhen, ip_address, country, city, region) 
                 values (:id, :when, :ip, :country, :city, :region)";
@@ -102,9 +101,9 @@ class BookController extends AbstractController
         $stmt->bindValue(":id", $id);
         $stmt->bindValue(":when", $when->format("Y-m-d H:i:s"));
         $stmt->bindValue(":ip", $ip);
-        $stmt->bindValue(":country", ($geo_info['status'] ?? '') === 'success' ? $geo_info['country'] : 'Unknown');
-        $stmt->bindValue(":city", ($geo_info['status'] ?? '') === 'success' ? $geo_info['city'] : 'Unknown');
-        $stmt->bindValue(":region", ($geo_info['status'] ?? '') === 'success' ? $geo_info['regionName'] : 'Unknown');
+        $stmt->bindValue(":country", $country);
+        $stmt->bindValue(":city", $city);
+        $stmt->bindValue(":region", $region);
         
         $stmt->executeStatement();
     }
