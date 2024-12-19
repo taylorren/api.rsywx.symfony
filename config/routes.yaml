@@ -24,6 +24,13 @@ book_detail:
     controller: App\Controller\BookController::detail
     requirements:
         count: '\d{5}'
+
+book_related:
+    path: /book/related/{bookid}
+    controller: App\Controller\BookController::related
+    requirements:
+        count: '\d{5}'
+
 book_tags:
     path: /book/tags/{bookid}
     controller: App\Controller\BookController::tags
