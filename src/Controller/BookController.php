@@ -334,7 +334,8 @@ class BookController extends AbstractController
     public function today(): JsonResponse
     {
         // TODO: Shall I make this function call more flexible, i.e, by passing in the y/m/d?
-        $sql = 'select * from book_book where month(purchdate)=:m and day(purchdate)=:d and year(purchdate)<>:y order by year(purchdate)';
+        $sql = "select * from book_book b where $this->filter and month(b.purchdate)=:m and day(b.purchdate)=:d and year(b.purchdate)<>:y order by year(b.purchdate)";
+        
         $y = date('Y');
         $m = date('m');
         $d = date('d');
