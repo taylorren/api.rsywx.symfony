@@ -69,10 +69,10 @@ WHERE
         return $games;
     }
 
-    public function lakers(int $season):JsonResponse
+    public function lakers(int $season, int $span=14):JsonResponse
     {
         $summary=$this->_getWinLose($season);
-        $games=$this->_getGames(14);
+        $games=$this->_getGames($span);
 
         $data=[];
         $data['summary']=$summary;

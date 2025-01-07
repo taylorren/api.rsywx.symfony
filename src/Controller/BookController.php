@@ -187,7 +187,7 @@ class BookController extends AbstractController
             INNER JOIN book_taglist bt ON b.id = bt.bid
         WHERE 
             b.id != :bookId
-            AND bt.tag IN (' . implode(',', array_map(fn($i) => ":tag$i", array_keys($tags))) . ')  -- 使用命名占位符
+            AND bt.tag IN (' . implode(',', array_map(fn($i) => ":tag$i", array_keys($tags))) . ') and ' . $this->filter . '
         GROUP BY 
             b.id, b.title, b.author, b.publisher, b.pubdate
         HAVING 
