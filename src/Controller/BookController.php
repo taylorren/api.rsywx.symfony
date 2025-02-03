@@ -128,6 +128,12 @@ class BookController extends AbstractController
 
     private function getTagWeights(array $tags): array
     {
+        // Notes on 25-02-03
+        // The $maxUsage variable could be potentially zero, which would result in a division by zero error.
+        // It appears for one particular book (for now, identified 01875), so I have changed the tags for 
+        // that book so that for that book, the usage count is not zero.
+        // The issue may arise for other books with very specific tags.
+        
         $conn = $this->_conn;  // 使用现有的数据库连接
 
         // 构建 SQL 查询
