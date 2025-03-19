@@ -2,14 +2,18 @@
 
 namespace App\Controller;
 
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\VarDumper\Cloner\AbstractCloner;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class MiscController extends AbstractController
 {
     private Connection $_conn;
+    private HttpClientInterface $weather_client;
+
     public function __construct(Connection $connection)
     {
         $this->_conn = $connection;
@@ -81,6 +85,7 @@ WHERE
         return new JsonResponse($data);
     }
 
+    // Return a random word from the wotd table
     public function wotd(): JsonResponse
     {
         $sql = "SELECT word, meaning, sentence, type FROM wotd ORDER BY RAND() LIMIT 1";
@@ -94,5 +99,20 @@ WHERE
             'sentence' => $word['sentence'],
             'type' => $word['type']
         ]);
+    }
+
+    // Return the current weather in Suzhou from 和风
+    public function weather(): JsonResponse
+    {
+        $this->weather_client = HttpClient::create();
+        $key = $this->getParameter('WEATHER_API_KEY');
+        $remote_api = "https://devapi.qweather.com/v7/weather/now?location=101190401&key=$key";
+        $response = $this->weather_client->request(
+            'GET',
+            $remote_api,
+        );
+        
+        $res=$response->toArray();
+        return new JsonResponse($res);
     }
 }

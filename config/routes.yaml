@@ -106,3 +106,7 @@ admin_forget_books:
 lakers:
     path: /lakers/{season}
     controller: App\Controller\MiscController::lakers
+
+weather: 
+    path: /weather
+    controller: App\Controller\MiscController::weather
