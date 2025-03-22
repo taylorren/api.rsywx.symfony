@@ -106,13 +106,14 @@ WHERE
     {
         $this->weather_client = HttpClient::create();
         $key = $this->getParameter('WEATHER_API_KEY');
-        $remote_api = "https://devapi.qweather.com/v7/weather/now?location=101190401&key=$key";
+        $weather_api = "https://devapi.qweather.com/v7/weather/now?location=101190401&key=$key";
         $response = $this->weather_client->request(
             'GET',
-            $remote_api,
+            $weather_api,
         );
         
         $res=$response->toArray();
+        
         return new JsonResponse($res);
     }
 }
