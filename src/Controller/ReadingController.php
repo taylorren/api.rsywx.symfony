@@ -14,6 +14,15 @@ class ReadingController extends AbstractController
     {
         $this->_conn = $connection;
     }
+    
+    public function __destruct()
+    {
+        if($this->_conn->isConnected())
+        {
+            $this->_conn->close();
+        }
+    }
+    
     public function summary(): JsonResponse
     {
         $sql = 'select count(r.id) rc, count(distinct(h.hid)) hc from book_review r, book_headline h where r.hid=h.hid';

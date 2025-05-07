@@ -29,6 +29,14 @@ class BookController extends AbstractController
         $this->rpp = 10;
     }
 
+    public function __destruct()
+    {
+        if($this->_conn->isConnected())
+        {
+            $this->_conn->close();
+        }
+    }
+
     public function summary(Connection $connection): JsonResponse
     {
         $sql = "select count(id) bc, sum(page) pc, sum(kword) wc from book_book b where $this->filter";

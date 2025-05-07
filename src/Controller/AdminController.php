@@ -22,7 +22,13 @@ class AdminController extends AbstractController
         对涉及书籍的数据库操作，都需要增加一个filter
         */
     }
-    
+    public function __destruct()
+    {
+        if($this->_conn->isConnected())
+        {
+            $this->_conn->close();
+        }
+    }
     public function visitByDay(int $span = 30): JsonResponse
     {
         $sql = "SELECT count(vid) vc, date(visitwhen) vd

@@ -15,6 +15,13 @@ class DefaultController extends AbstractController
         $this->_conn=$connection;
         
     }
+    public function __destruct()
+    {
+        if($this->_conn->isConnected())
+        {
+            $this->_conn->close();
+        }
+    }
     public function index(): JsonResponse
     {
         $data=[

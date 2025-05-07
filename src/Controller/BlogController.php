@@ -21,6 +21,13 @@ class BlogController extends AbstractController
             throw new \Exception('Invalid EntityManager returned');
         }
     }
+    public function __destruct()
+    {
+        if($this->_conn->isConnected())
+        {
+            $this->_conn->close();
+        }
+    }
 
     public function latest(int $count = 1): JsonResponse
     {
