@@ -23,19 +23,19 @@ book_detail:
     path: /book/detail/{bookid}
     controller: App\Controller\BookController::detail
     requirements:
-        count: '\d{5}'
+        bookid: '\d{5}'
 
 book_related:
     path: /book/related/{bookid}
     controller: App\Controller\BookController::related
     requirements:
-        count: '\d{5}'
+        bookid: '\d{5}'
 
 book_tags:
     path: /book/tags/{bookid}
     controller: App\Controller\BookController::tags
     requirements:
-        count: '\ddddd'
+        bookid: '\d{5}'
 book_addtags:
     path: /book/addtags
     controller: App\Controller\BookController::addTags
