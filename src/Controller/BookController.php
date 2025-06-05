@@ -82,7 +82,7 @@ class BookController extends AbstractController
         // Add a visit record for this book
         $this->updateVisit($res['id']);
         // Get the reviews
-        $sql2 = 'select r.title rt, r.datein, r.uri, b.title bt
+        $sql2 = 'select r.title rt, r.datein, r.uri, b.title bt, r.feature
                 from book_headline h, book_review r, book_book b
                 where h.hid=r.hid
                 and h.bid=b.id
