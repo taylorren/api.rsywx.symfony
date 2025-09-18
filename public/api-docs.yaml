@@ -1,0 +1,941 @@
+openapi: 3.0.0
+info:
+  title: 'RSYWX Library API'
+  description: 'A comprehensive API for managing your personal library collection. Access book details, collection statistics, and more.'
+  version: 1.0.0
+servers:
+  -
+    url: /api/v1
+    description: 'API v1'
+paths:
+  /books/status:
+    get:
+      tags:
+        - 'Collection Statistics'
+      summary: 藏书基本信息
+      description: 返回书籍总数、总页数、总千字数，以及总访问量
+      operationId: eda8010d56730e27bd4a2418026d2982
+      parameters:
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Collection status'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { properties: { total_books: { type: integer, example: 1820 }, total_pages: { type: integer, example: 724621 }, total_kwords: { type: integer, example: 483369 }, total_visits: { type: integer, example: 2514665 } }, type: object }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/{bookid}':
+    get:
+      tags:
+        - 'Book Details'
+      summary: 'Get book details'
+      description: 'Returns detailed information for a specific book including metadata, tags, reviews, and visit statistics'
+      operationId: eee78a99101d90bfaf1a6b61f1cde759
+      parameters:
+        -
+          name: bookid
+          in: path
+          description: 'Book ID'
+          required: true
+          schema:
+            type: string
+            example: '00666'
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Book details'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { properties: { id: { type: integer, example: 666 }, bookid: { type: string, example: '00666' }, title: { type: string, example: 隐形的城市 }, author: { type: string, example: 卡尔维诺 }, translated: { type: boolean, example: true }, copyrighter: { type: string, example: 译林出版社, nullable: true }, region: { type: string, example: 意大利 }, location: { type: string, example: 书房 }, purchdate: { type: string, example: '2020-05-15' }, price: { type: number, example: 45 }, pubdate: { type: string, example: '2019-03-01' }, printdate: { type: string, example: '2019-03-15' }, ver: { type: string, example: '1' }, deco: { type: string, example: 精装 }, isbn: { type: string, example: 978-7-5447-6789-0 }, category: { type: string, example: 文学, nullable: true }, ol: { type: string, example: cn, nullable: true }, kword: { type: integer, example: 120 }, page: { type: integer, example: 280 }, intro: { type: string, example: 'Book introduction text' }, instock: { type: boolean, example: true }, publisher_name: { type: string, example: 花城出版社 }, place_name: { type: string, example: 上海 }, tags: { type: array, items: { type: string }, example: [意大利, 散文, 文学, 经典] }, reviews: { type: array, items: { type: object } }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/00666.jpg' }, total_visits: { type: integer, example: 4843 }, last_visited: { type: string, example: '2025-07-27 07:29:57' } }, type: object }
+                  cached: { type: boolean, example: true }
+                type: object
+        '404':
+          description: 'Book not found'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: 'Book not found' }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/latest/{count}':
+    get:
+      tags:
+        - 'Book Lists'
+      summary: 'Get latest purchased books'
+      description: 'Returns the most recently purchased books, ordered by purchase date (newest first)'
+      operationId: 2d0d1d01b2ee495d9fbd3994c25136f1
+      parameters:
+        -
+          name: count
+          in: path
+          description: 'Number of books to return (defaults to 1)'
+          required: false
+          schema:
+            type: integer
+            maximum: 100
+            minimum: 1
+            example: 5
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Latest purchased books'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { id: { type: integer, example: 2083 }, bookid: { type: string, example: '02083' }, title: { type: string, example: 维吉尔之死 }, author: { type: string, example: 布洛赫 }, translated: { type: boolean, example: true }, copyrighter: { type: string, example: 译林出版社, nullable: true }, region: { type: string, example: 奥地利 }, location: { type: string, example: 书房 }, publisher_name: { type: string, example: 译林出版社 }, place_name: { type: string, example: 苏州 }, purchdate: { type: string, example: '2025-07-07' }, price: { type: number, example: 88 }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/02083.jpg' } }, type: object } }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/random/{count}':
+    get:
+      tags:
+        - 'Book Lists'
+      summary: 'Get random books'
+      description: 'Returns a random selection of books from your library collection'
+      operationId: 816a08e34ed727b560f0a4c29af55962
+      parameters:
+        -
+          name: count
+          in: path
+          description: 'Number of random books to return (defaults to 1)'
+          required: false
+          schema:
+            type: integer
+            maximum: 50
+            minimum: 1
+            example: 5
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Random books from collection'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { id: { type: integer, example: 1234 }, bookid: { type: string, example: '01234' }, title: { type: string, example: 随机书籍标题 }, author: { type: string, example: 作者姓名 }, translated: { type: boolean, example: false }, copyrighter: { type: string, example: null, nullable: true }, region: { type: string, example: 中国 }, location: { type: string, example: 书房 }, publisher_name: { type: string, example: 出版社名称 }, place_name: { type: string, example: 出版地 }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/01234.jpg' }, total_visits: { type: integer, example: 123 }, last_visited: { type: string, example: '2025-07-27 10:30:00' } }, type: object } }
+                  cached: { type: boolean, example: false }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/last_visited/{count}':
+    get:
+      tags:
+        - 'Book Lists'
+      summary: 'Get recently visited books'
+      description: 'Returns books ordered by most recent visit time (most recently visited first)'
+      operationId: 5a1e5ce68db1e2fca755b3ab4d37f4b3
+      parameters:
+        -
+          name: count
+          in: path
+          description: 'Number of recently visited books to return (defaults to 1)'
+          required: false
+          schema:
+            type: integer
+            maximum: 50
+            minimum: 1
+            example: 5
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Recently visited books'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { id: { type: integer, example: 1234 }, bookid: { type: string, example: '01234' }, title: { type: string, example: 最近访问的书籍 }, author: { type: string, example: 作者姓名 }, translated: { type: boolean, example: false }, copyrighter: { type: string, example: null, nullable: true }, region: { description: "Author's region", type: string, example: 中国 }, location: { type: string, example: 书房 }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/01234.jpg' }, last_visited: { type: string, example: '2025-07-27 12:30:00' }, visit_country: { description: 'Country where the book was accessed', type: string, example: China, nullable: true } }, type: object } }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/forgotten/{count}':
+    get:
+      tags:
+        - 'Book Lists'
+      summary: 'Get forgotten books'
+      description: "Returns books that haven't been visited for a long time, ordered by oldest visit first (most forgotten first)"
+      operationId: 13e3c95b358d9c1db7070ee0ff432124
+      parameters:
+        -
+          name: count
+          in: path
+          description: 'Number of forgotten books to return (defaults to 1)'
+          required: false
+          schema:
+            type: integer
+            maximum: 50
+            minimum: 1
+            example: 5
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Forgotten books (not visited recently)'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { id: { type: integer, example: 1234 }, bookid: { type: string, example: '01234' }, title: { type: string, example: 被遗忘的书籍 }, author: { type: string, example: 作者姓名 }, translated: { type: boolean, example: false }, copyrighter: { type: string, example: null, nullable: true }, region: { type: string, example: 中国 }, location: { type: string, example: 书房 }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/01234.jpg' }, last_visited: { type: string, example: '2024-01-15 10:30:00' }, days_since_visit: { description: 'Number of days since last visit', type: integer, example: 180 } }, type: object } }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/today/{month}/{date}':
+    get:
+      tags:
+        - 'Book Lists'
+      summary: 'Get books for specific date'
+      description: "Returns books purchased on a specific date in previous years (excluding current year) - like 'on this day in history' for your book collection."
+      operationId: 163237a209f4927b55e63dd4229db85f
+      parameters:
+        -
+          name: month
+          in: path
+          description: 'Month (1-12)'
+          required: true
+          schema:
+            type: integer
+            maximum: 12
+            minimum: 1
+            example: 8
+        -
+          name: date
+          in: path
+          description: 'Day of month (1-31)'
+          required: true
+          schema:
+            type: integer
+            maximum: 31
+            minimum: 1
+            example: 7
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Books purchased on the specified date in previous years'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { id: { type: integer, example: 1234 }, bookid: { type: string, example: '01234' }, title: { type: string, example: 历史书籍 }, author: { type: string, example: 作者姓名 }, translated: { type: boolean, example: false }, copyrighter: { type: string, example: null, nullable: true }, region: { type: string, example: 中国 }, location: { description: 'Physical location/shelf code where the book is stored', type: string, example: f3 }, publisher_name: { type: string, example: 出版社名称 }, place_name: { type: string, example: 购买地点 }, purchdate: { type: string, example: '2020-08-07' }, price: { type: number, example: 25.5 }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/01234.jpg' }, years_ago: { description: 'How many years ago this book was purchased', type: integer, example: 5 } }, type: object } }
+                  cached: { type: boolean, example: true }
+                  date_info: { properties: { requested_date: { type: string, example: '2025-08-07' }, month_day: { type: string, example: 08-07 }, is_today: { type: boolean, example: true } }, type: object }
+                type: object
+        '400':
+          description: 'Invalid date parameters'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: 'Invalid date: month must be 1-12, date must be 1-31' }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  /books/today:
+    get:
+      tags:
+        - 'Book Lists'
+      summary: "Get today's books"
+      description: "Returns books purchased on today's date in previous years (excluding current year) - like 'on this day in history' for your book collection."
+      operationId: 4d0c23e27a9bcb6ee76c86e53571e085
+      parameters:
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: "Books purchased on today's date in previous years"
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { id: { type: integer, example: 1234 }, bookid: { type: string, example: '01234' }, title: { type: string, example: 今日历史书籍 }, author: { type: string, example: 作者姓名 }, translated: { type: boolean, example: false }, copyrighter: { type: string, example: null, nullable: true }, region: { type: string, example: 中国 }, location: { description: 'Physical location/shelf code where the book is stored', type: string, example: f3 }, publisher_name: { type: string, example: 出版社名称 }, place_name: { type: string, example: 购买地点 }, purchdate: { type: string, example: '2020-08-07' }, price: { type: number, example: 25.5 }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/01234.jpg' }, years_ago: { description: 'How many years ago this book was purchased', type: integer, example: 5 } }, type: object } }
+                  cached: { type: boolean, example: true }
+                  date_info: { properties: { requested_date: { type: string, example: '2025-08-07' }, month_day: { type: string, example: 08-07 }, is_today: { type: boolean, example: true } }, type: object }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  /books/visit_history:
+    get:
+      tags:
+        - 'Collection Statistics'
+      summary: 'Get visit count history'
+      description: 'Returns daily visit counts for the past 30 days, useful for creating visit trend graphs'
+      operationId: bc4ef9b75ada8ab26e5938383925e6ce
+      parameters:
+        -
+          name: days
+          in: query
+          description: 'Number of days to include (defaults to 30, max 365)'
+          required: false
+          schema:
+            type: integer
+            maximum: 365
+            minimum: 1
+            example: 30
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Daily visit counts for the specified period'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { date: { type: string, example: '2025-08-07' }, visit_count: { type: integer, example: 45 }, day_of_week: { type: string, example: Thursday } }, type: object } }
+                  cached: { type: boolean, example: true }
+                  period_info: { properties: { start_date: { type: string, example: '2025-07-08' }, end_date: { type: string, example: '2025-08-07' }, total_days: { type: integer, example: 30 }, total_visits: { type: integer, example: 1250 } }, type: object }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/list/{type?}/{value?}/{page?}':
+    get:
+      tags:
+        - 'Book Lists'
+      summary: 'List/search books'
+      description: 'Search books by author, title, tag, or misc criteria with pagination. All parameters are optional. Default: list all books ordered by id DESC, page 1'
+      operationId: 068b02f84fcf113e83be348c3b1a58bf
+      parameters:
+        -
+          name: type
+          in: path
+          description: 'Search type: author, title, tag, misc, id (default: id)'
+          required: false
+          schema:
+            type: string
+            default: id
+            enum:
+              - author
+              - title
+              - tag
+              - misc
+              - id
+            example: author
+        -
+          name: value
+          in: path
+          description: 'Search value (optional for type=id)'
+          required: false
+          schema:
+            type: string
+            example: 卡尔维诺
+        -
+          name: page
+          in: path
+          description: 'Page number (1-based, default: 1)'
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: 'List of books matching search criteria'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { id: { type: integer, example: 666 }, bookid: { type: string, example: '00666' }, title: { type: string, example: 隐形的城市 }, author: { type: string, example: 卡尔维诺 }, translated: { type: boolean, example: true }, copyrighter: { type: string, example: 译林出版社, nullable: true }, region: { type: string, example: 意大利 }, location: { type: string, example: 书房 }, purchdate: { type: string, example: '2020-05-15' }, tags: { type: array, items: { type: string }, example: [意大利, 文学, 经典] }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/00666.jpg' } }, type: object } }
+                  pagination: { properties: { current_page: { type: integer, example: 1 }, total_pages: { type: integer, example: 5 }, total_results: { type: integer, example: 23 }, per_page: { type: integer, example: 20 } }, type: object }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/{sbookid}/tags':
+    post:
+      tags:
+        - 'Book Management'
+      summary: 'Add tags to a book'
+      description: 'Add one or more tags to a book. Duplicate tags are ignored.'
+      operationId: e2b0b3a137fca381a02d79cdd4c161aa
+      parameters:
+        -
+          name: bookid
+          in: path
+          description: 'Book ID (5 digits)'
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{5}$'
+            example: '00666'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                tags:
+                  type: array
+                  items: { type: string }
+                  example: [经典, 文学, 推荐]
+              type: object
+      responses:
+        '200':
+          description: 'Tags added successfully'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: 'Tags added successfully' }
+                  added_tags: { type: array, items: { type: string }, example: [经典, 文学] }
+                  duplicate_tags: { type: array, items: { type: string }, example: [推荐] }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/{bookid}/related/{count}':
+    get:
+      tags:
+        - 'Book Recommendations'
+      summary: 'Get related books'
+      description: 'Returns books related to the specified book based on tags, author, category, and behavioral patterns'
+      operationId: c7aea506b7954e75813ecbde867b0184
+      parameters:
+        -
+          name: bookid
+          in: path
+          description: 'Book ID (5 digits)'
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{5}$'
+            example: '00666'
+        -
+          name: count
+          in: path
+          description: 'Number of related books to return (defaults to 5)'
+          required: false
+          schema:
+            type: integer
+            maximum: 20
+            minimum: 1
+            example: 5
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Related books with similarity scores'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { book: { properties: { id: { type: integer, example: 1234 }, bookid: { type: string, example: '01234' }, title: { type: string, example: 相关书籍标题 }, author: { type: string, example: 作者姓名 }, tags: { type: array, items: { type: string } }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/01234.jpg' } }, type: object }, similarity_score: { type: number, example: 0.87 }, relationship_reasons: { type: array, items: { type: string }, example: ['共同标签: 文学, 经典', 同一作者] } }, type: object } }
+                  algorithm_info: { properties: { primary_factors: { type: array, items: { type: string } }, computation_time: { type: string, example: 12ms }, cached: { type: boolean, example: false } }, type: object }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/books/popular/{count}':
+    get:
+      tags:
+        - Books
+      summary: 'Get most popular books'
+      description: 'Returns the most popular books ordered by total visit count in descending order'
+      operationId: f07b79ab10d663c2a07ecfda7bcbbe5f
+      parameters:
+        -
+          name: count
+          in: path
+          description: 'Number of popular books to return (1-50)'
+          required: true
+          schema:
+            type: integer
+            maximum: 50
+            minimum: 1
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+      responses:
+        '200':
+          description: 'Most popular books retrieved successfully'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { id: { type: integer, example: 123 }, bookid: { type: string, example: BK001 }, title: { type: string, example: 红楼梦 }, author: { type: string, example: 曹雪芹 }, total_visits: { type: integer, example: 1250 }, last_visited: { type: string, format: date-time, example: '2024-01-15 14:30:00' }, purchdate: { type: string, format: date, example: '2023-05-20' }, place_name: { type: string, example: 北京书店 } }, type: object } }
+                  cached: { type: boolean, example: false }
+                type: object
+        '400':
+          description: 'Invalid count parameter'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: 'Count must be between 1 and 50' }
+                type: object
+  /misc/wotd:
+    get:
+      tags:
+        - Miscellaneous
+      summary: 'Get Word of the Day'
+      description: 'Returns a random word of the day with its meaning, example sentence, and word type'
+      operationId: febbda92051d9162570d97ecfac0cec3
+      responses:
+        '200':
+          description: 'Word of the Day'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { properties: { id: { type: integer, example: 42 }, word: { type: string, example: serendipity }, meaning: { type: string, example: 'The occurrence of events by chance in a happy way' }, sentence: { type: string, example: 'It was pure serendipity that led to their meeting.' }, type: { type: string, example: noun } }, type: object }
+                  cached: { type: boolean, example: false }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  /misc/qotd:
+    get:
+      tags:
+        - Miscellaneous
+      summary: 'Get Quote of the Day'
+      description: 'Returns a random quote from the collection'
+      operationId: e5c59aac2c8cb0b97cbe571ee1c90032
+      responses:
+        '200':
+          description: 'Quote of the Day'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { properties: { id: { type: integer, example: 42 }, quote: { type: string, example: 'The only way to do great work is to love what you do.' }, source: { type: string, example: 'Steve Jobs' } }, type: object }
+                  cached: { type: boolean, example: false }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  /misc/weather/current:
+    get:
+      tags:
+        - Miscellaneous
+      summary: 'Get Current Weather'
+      description: 'Returns current weather conditions using QWeather API'
+      operationId: fd867e951e658c5004cd0f407ccda0bb
+      parameters:
+        -
+          name: location
+          in: query
+          description: 'Location (city name, coordinates, or location ID)'
+          required: false
+          schema:
+            type: string
+            example: beijing
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Current weather conditions'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { properties: { location: { type: string, example: beijing }, temperature: { type: string, example: '25' }, feels_like: { type: string, example: '27' }, condition: { type: string, example: Sunny }, humidity: { type: string, example: '65' }, pressure: { type: string, example: '1013' }, wind_speed: { type: string, example: '15' }, update_time: { type: string, example: '2025-08-07T14:30+08:00' } }, type: object }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  /misc/weather/forecast:
+    get:
+      tags:
+        - Miscellaneous
+      summary: 'Get Weather Forecast'
+      description: 'Returns weather forecast using QWeather API'
+      operationId: 6481df878e80802c662bd35770564e58
+      parameters:
+        -
+          name: location
+          in: query
+          description: 'Location (city name, coordinates, or location ID)'
+          required: false
+          schema:
+            type: string
+            example: beijing
+        -
+          name: days
+          in: query
+          description: 'Number of forecast days (1-7)'
+          required: false
+          schema:
+            type: integer
+            maximum: 7
+            minimum: 1
+            example: 3
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Weather forecast'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { properties: { location: { type: string, example: beijing }, forecast: { type: array, items: { properties: { date: { type: string, example: '2025-08-07' }, temp_max: { type: string, example: '28' }, temp_min: { type: string, example: '18' }, condition_day: { type: string, example: Sunny }, condition_night: { type: string, example: Clear } }, type: object } } }, type: object }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  /readings/summary:
+    get:
+      tags:
+        - 'Reading Statistics'
+      summary: 'Get Reading Summary Statistics'
+      description: 'Returns reading statistics including books read count, reviews written count, and reading activity date range'
+      operationId: 283afd58b7fcd67c8eb8944921aacddb
+      parameters:
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Reading summary statistics'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { properties: { books_read: { type: integer, example: 42 }, reviews_written: { type: integer, example: 156 }, reading_period: { properties: { earliest_date: { type: string, example: '2020-01-15' }, latest_date: { type: string, example: '2025-07-28' }, total_days: { type: integer, example: 1825 } }, type: object } }, type: object }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/readings/latest/{count}':
+    get:
+      tags:
+        - 'Reading Statistics'
+      summary: 'Get Latest Readings'
+      description: 'Returns the most recent reading activities with book details, ordered by reading date (newest first)'
+      operationId: d1cb30eb63764f5fd7a7b6f431a8a61d
+      parameters:
+        -
+          name: count
+          in: path
+          description: 'Number of latest readings to return (defaults to 1)'
+          required: false
+          schema:
+            type: integer
+            maximum: 50
+            minimum: 1
+            example: 1
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Latest reading activities'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { title: { type: string, example: 'My Review Title' }, datein: { type: string, example: '2025-07-14' }, uri: { type: string, example: /reviews/my-review }, feature: { type: string, example: feature-image.jpg }, bookid: { type: string, example: '01234' }, book_title: { type: string, example: 'Book Being Reviewed' }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/01234.jpg' } }, type: object } }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/readings/reviews/{page}':
+    get:
+      tags:
+        - 'Reading Statistics'
+      summary: 'Get Reviews with Pagination'
+      description: 'Returns reviews with pagination support, ordered by date (newest first). Fixed at 9 reviews per page for consistent frontend display.'
+      operationId: bad8f19386ac17e745eda0efbc3850dd
+      parameters:
+        -
+          name: page
+          in: path
+          description: 'Page number (defaults to 1)'
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Paginated reviews'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { title: { type: string, example: 'My Review Title' }, datein: { type: string, example: '2025-07-14' }, uri: { type: string, example: 'https://blog.rsywx.net/2025/07/14/my-review/' }, feature: { type: string, example: 'https://blog.rsywx.net/wp-content/uploads/2025/07/feature.jpg' }, bookid: { type: string, example: '01234' }, book_title: { type: string, example: 'Book Being Reviewed' }, cover_uri: { type: string, example: 'https://api.rsywx.com/covers/01234.jpg' } }, type: object } }
+                  pagination: { properties: { current_page: { type: integer, example: 1 }, total_pages: { type: integer, example: 5 }, total_results: { type: integer, example: 42 }, per_page: { type: integer, example: 9 } }, type: object }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  /health:
+    get:
+      tags:
+        - System
+      summary: 'Health check'
+      description: 'Check if the API is running and accessible'
+      operationId: b47610414074fd57bd075b89cbcdcdf0
+      responses:
+        '200':
+          description: 'API is healthy'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: 'API is running' }
+                  timestamp: { type: string, example: '2025-07-27 10:30:00' }
+                type: object
+  '/wp/posts/today/{month}/{day}':
+    get:
+      tags:
+        - WordPress
+      summary: 'Get WordPress posts for specific date'
+      description: "Returns WordPress posts published on a specific date in previous years (excluding current year) - like 'on this day in history' for your WordPress blog."
+      operationId: 038cc40b365dec9f1562db19b1752903
+      parameters:
+        -
+          name: month
+          in: path
+          description: 'Month (1-12)'
+          required: true
+          schema:
+            type: integer
+            maximum: 12
+            minimum: 1
+            example: 9
+        -
+          name: day
+          in: path
+          description: 'Day of month (1-31)'
+          required: true
+          schema:
+            type: integer
+            maximum: 31
+            minimum: 1
+            example: 5
+      responses:
+        '200':
+          description: 'WordPress posts published on the specified date in previous years'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { ID: { type: integer, example: 9879 }, post_title: { type: string, example: 三个AI做一道小题目 }, post_name: { type: string, example: three-ai-small-problem }, post_excerpt: { type: string, example: 'Post excerpt...' }, post_date: { type: string, example: '2022-09-05 10:23:28' }, post_status: { type: string, example: publish }, author: { type: string, example: root }, years_ago: { description: 'How many years ago this post was published', type: integer, example: 2 }, permalink: { description: 'Full WordPress permalink URL to the post', type: string, example: 'https://blog.rsywx.net/2022/09/05/three-ai-small-problem/' } }, type: object } }
+                  date_info: { properties: { month: { type: integer, example: 9 }, day: { type: integer, example: 5 }, date_string: { type: string, example: 'September 5' }, is_today: { type: boolean, example: true } }, type: object }
+                  count: { type: integer, example: 6 }
+                type: object
+        '400':
+          description: 'Invalid date parameters'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: 'Invalid date parameters' }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  /wp/posts/today:
+    get:
+      tags:
+        - WordPress
+      summary: 'Get WordPress posts for today in history'
+      description: "Returns WordPress posts published on today's date in previous years (excluding current year) - like 'on this day in history' for your WordPress blog."
+      operationId: 6a3eb6eb41fdc6ab775c7f43f8a2c0eb
+      responses:
+        '200':
+          description: "WordPress posts published on today's date in previous years"
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { ID: { type: integer, example: 9879 }, post_title: { type: string, example: "Don't be a ..." }, post_name: { type: string, example: dont-be-a }, post_excerpt: { type: string, example: 'Post excerpt...' }, post_date: { type: string, example: '2022-09-05 10:23:28' }, post_status: { type: string, example: publish }, author: { type: string, example: root }, years_ago: { description: 'How many years ago this post was published', type: integer, example: 2 }, permalink: { description: 'WordPress permalink to the post', type: string, example: /2022/09/05/dont-be-a/ } }, type: object } }
+                  date_info: { properties: { month: { type: integer, example: 9 }, day: { type: integer, example: 5 }, date_string: { type: string, example: 'September 5' }, is_today: { type: boolean, example: true } }, type: object }
+                  count: { type: integer, example: 6 }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      description: 'API key required for authentication'
+      name: X-API-Key
+      in: header
+tags:
+  -
+    name: 'Collection Statistics'
+    description: 'Collection Statistics'
+  -
+    name: 'Book Details'
+    description: 'Book Details'
+  -
+    name: 'Book Lists'
+    description: 'Book Lists'
+  -
+    name: 'Book Management'
+    description: 'Book Management'
+  -
+    name: 'Book Recommendations'
+    description: 'Book Recommendations'
+  -
+    name: Books
+    description: Books
+  -
+    name: Miscellaneous
+    description: Miscellaneous
+  -
+    name: 'Reading Statistics'
+    description: 'Reading Statistics'
+  -
+    name: System
+    description: System
+  -
+    name: WordPress
+    description: WordPress

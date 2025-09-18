@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.6/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         verbose="true">
+    <testsuites>
+        <testsuite name="Unit Tests">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration Tests">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+    
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory>vendor</directory>
+            <directory>cache</directory>
+        </exclude>
+    </coverage>
+    
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="DB_HOST" value="your_db_host"/>
+        <env name="DB_NAME" value="your_db_name"/>
+        <env name="DB_USER" value="your_db_user"/>
+        <env name="DB_PASSWORD" value="your_db_password"/>
+        <env name="DB_CHARSET" value="utf8mb4"/>
+        <env name="API_KEY" value="your_api_key"/>
+        <env name="API_VERSION" value="v1"/>
+        
+        <!-- WordPress Configuration for Integration Tests -->
+        <env name="WP_API_ENABLED" value="true"/>
+        <env name="WP_API_ENDPOINT" value="https://your-wordpress-site.com/"/>
+        <env name="WP_API_USERNAME" value="your_wp_username"/>
+        <env name="WP_API_PASSWORD" value="your_wp_password"/>
+        <env name="WP_APPLICATION_PASSWORD" value="your_wp_app_password"/>
+        <env name="WP_JWT_SECRET" value="your_jwt_secret"/>
+        <env name="WP_API_TIMEOUT" value="30"/>
+        
+        <env name="WP_DB_ENABLED" value="true"/>
+        <env name="WP_DB_HOST" value="your_wp_db_host"/>
+        <env name="WP_DB_PORT" value="3306"/>
+        <env name="WP_DB_NAME" value="your_wp_db_name"/>
+        <env name="WP_DB_USER" value="your_wp_db_user"/>
+        <env name="WP_DB_PASSWORD" value="your_wp_db_password"/>
+        <env name="WP_DB_CHARSET" value="utf8mb4"/>
+        <env name="WP_DB_PREFIX" value="wp_"/>
+        
+        <env name="WP_CACHE_ENABLED" value="true"/>
+        <env name="WP_CACHE_TTL_POSTS" value="3600"/>
+        <env name="WP_CACHE_TTL_USERS" value="14400"/>
+        <env name="WP_CACHE_TTL_TAXONOMIES" value="86400"/>
+        
+        <env name="WP_SITE_ID" value="main"/>
+        <env name="WP_SITE_NAME" value="Your Site Name"/>
+    </php>
+</phpunit>
