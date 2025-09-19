@@ -210,6 +210,17 @@ class BookQueryBuilder
         return $this;
     }
     
+    public function leastPopular($count = 1)
+    {
+        // Ensure visit_stats is included for ordering by total_visits
+        $this->includeVisitStats();
+        
+        // Order by total visits ascending (least popular first), then by book ID descending for consistency
+        $this->addOrderBy('COALESCE(visit_stats.total_visits, 0) ASC, b.id DESC');
+        $this->limit($count);
+        return $this;
+    }
+    
     private function addField($field, $alias = null)
     {
         if ($alias) {

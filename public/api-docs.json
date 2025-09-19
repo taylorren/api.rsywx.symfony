@@ -15,7 +15,7 @@
         "/books/status": {
             "get": {
                 "tags": [
-                    "Collection Statistics"
+                    "Books"
                 ],
                 "summary": "藏书基本信息",
                 "description": "返回书籍总数、总页数、总千字数，以及总访问量",
@@ -1687,6 +1687,126 @@
                 }
             }
         },
+        "/books/unpopular/{count}": {
+            "get": {
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Get most unpopular books",
+                "description": "Returns the most unpopular books ordered by total visit count in ascending order",
+                "operationId": "f4678f1a6933dc4f7887255511f4feec",
+                "parameters": [
+                    {
+                        "name": "count",
+                        "in": "path",
+                        "description": "Number of unpopular books to return (1-50)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 50,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "refresh",
+                        "in": "query",
+                        "description": "Force refresh cache",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Most unpopular books retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 456
+                                                    },
+                                                    "bookid": {
+                                                        "type": "string",
+                                                        "example": "BK002"
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "冷门书籍"
+                                                    },
+                                                    "author": {
+                                                        "type": "string",
+                                                        "example": "某作者"
+                                                    },
+                                                    "total_visits": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "last_visited": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2023-01-15 14:30:00"
+                                                    },
+                                                    "purchdate": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2022-05-20"
+                                                    },
+                                                    "place_name": {
+                                                        "type": "string",
+                                                        "example": "网上书店"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "cached": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid count parameter",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Count must be between 1 and 50"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/misc/wotd": {
             "get": {
                 "tags": [
@@ -2603,8 +2723,8 @@
     },
     "tags": [
         {
-            "name": "Collection Statistics",
-            "description": "Collection Statistics"
+            "name": "Books",
+            "description": "Books"
         },
         {
             "name": "Book Details",
@@ -2615,16 +2735,16 @@
             "description": "Book Lists"
         },
         {
+            "name": "Collection Statistics",
+            "description": "Collection Statistics"
+        },
+        {
             "name": "Book Management",
             "description": "Book Management"
         },
         {
             "name": "Book Recommendations",
             "description": "Book Recommendations"
-        },
-        {
-            "name": "Books",
-            "description": "Books"
         },
         {
             "name": "Miscellaneous",

@@ -7,6 +7,7 @@ use App\Models\Book;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use OpenApi\Attributes as OA;
+use Exception;
 
 #[OA\Info(
     version: "1.0.0",
@@ -37,7 +38,7 @@ class BookController
         path: "/books/status",
         summary: "藏书基本信息",
         description: "返回书籍总数、总页数、总千字数，以及总访问量",
-        tags: ["Collection Statistics"],
+        tags: ["Books"],
         security: [["ApiKeyAuth" => []]]
     )]
     #[OA\Parameter(
@@ -1271,6 +1272,111 @@ class BookController
                 'message' => $e->getMessage()
             ];
 
+            $response->getBody()->write(json_encode($errorData));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    #[OA\Get(
+        path: "/books/unpopular/{count}",
+        summary: "Get most unpopular books",
+        description: "Returns the most unpopular books ordered by total visit count in ascending order",
+        tags: ["Books"],
+        parameters: [
+            new OA\Parameter(
+                name: "count",
+                in: "path",
+                required: true,
+                description: "Number of unpopular books to return (1-50)",
+                schema: new OA\Schema(type: "integer", minimum: 1, maximum: 50)
+            ),
+            new OA\Parameter(
+                name: "refresh",
+                in: "query",
+                required: false,
+                description: "Force refresh cache",
+                schema: new OA\Schema(type: "string", enum: ["true", "false"])
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Most unpopular books retrieved successfully",
+                content: new OA\JsonContent(
+                    type: "object",
+                    properties: [
+                        "success" => new OA\Property(property: "success", type: "boolean", example: true),
+                        "data" => new OA\Property(
+                            property: "data",
+                            type: "array",
+                            items: new OA\Items(
+                                type: "object",
+                                properties: [
+                                    "id" => new OA\Property(property: "id", type: "integer", example: 456),
+                                    "bookid" => new OA\Property(property: "bookid", type: "string", example: "BK002"),
+                                    "title" => new OA\Property(property: "title", type: "string", example: "冷门书籍"),
+                                    "author" => new OA\Property(property: "author", type: "string", example: "某作者"),
+                                    "total_visits" => new OA\Property(property: "total_visits", type: "integer", example: 5),
+                                    "last_visited" => new OA\Property(property: "last_visited", type: "string", format: "date-time", example: "2023-01-15 14:30:00"),
+                                    "purchdate" => new OA\Property(property: "purchdate", type: "string", format: "date", example: "2022-05-20"),
+                                    "place_name" => new OA\Property(property: "place_name", type: "string", example: "网上书店")
+                                ]
+                            )
+                        ),
+                        "cached" => new OA\Property(property: "cached", type: "boolean", example: false)
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 400,
+                description: "Invalid count parameter",
+                content: new OA\JsonContent(
+                    type: "object",
+                    properties: [
+                        "success" => new OA\Property(property: "success", type: "boolean", example: false),
+                        "message" => new OA\Property(property: "message", type: "string", example: "Count must be between 1 and 50")
+                    ]
+                )
+            )
+        ]
+    )]
+    public function unpopular(Request $request, Response $response, $args)
+    {
+        try {
+            $count = isset($args['count']) ? (int)$args['count'] : 10;
+            
+            // Validate count parameter
+            if ($count < 1 || $count > 50) {
+                $errorData = [
+                    'success' => false,
+                    'message' => 'Count must be between 1 and 50'
+                ];
+                
+                $response->getBody()->write(json_encode($errorData));
+                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            }
+
+            $queryParams = $request->getQueryParams();
+            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+
+            $bookModel = new Book();
+            $result = $bookModel->getMostUnpopularBooks($count, $forceRefresh);
+
+            $data = [
+                'success' => true,
+                'data' => $result['data'],
+                'cached' => $result['cached']
+            ];
+
+            $response->getBody()->write(json_encode($data));
+            return $response->withHeader('Content-Type', 'application/json');
+
+        } catch (Exception $e) {
+            $errorData = [
+                'success' => false,
+                'message' => 'Internal server error: ' . $e->getMessage()
+            ];
+            
             $response->getBody()->write(json_encode($errorData));
             return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
         }

@@ -870,7 +870,7 @@ class Book
             }
         }
 
-        // 2. Different region but similar themes (cultural bridge)
+        // 2. Different region but similar themes (文化桥梁)
         if ($sourceBook['region'] !== $candidateBook['region']) {
             $tagOverlap = count(array_intersect($sourceTags, $candidateTags));
             if ($tagOverlap >= 1) {
@@ -1189,6 +1189,42 @@ class Book
             // Cache the result for 1 hour (popular books don't change frequently)
             $popularCacheTtl = 3600; // 1 hour
             $this->cache->set($cacheKey, $booksData, $popularCacheTtl);
+        }
+
+        return [
+            'data' => $booksData,
+            'from_cache' => $fromCache
+        ];
+    }
+
+    public function getMostUnpopularBooks($count = 1, $forceRefresh = false)
+    {
+        $cacheKey = "most_unpopular_books_{$count}";
+
+        // Get cached data
+        $booksData = null;
+        if (!$forceRefresh) {
+            $booksData = $this->cache->get($cacheKey);
+        }
+
+        $fromCache = ($booksData !== null);
+
+        // If not cached, fetch from database using unified system
+        if ($booksData === null) {
+            $queryBuilder = new BookQueryBuilder();
+            $books = $queryBuilder
+                ->includeFields(['purchase', 'visit_stats'])
+                ->leastPopular($count)
+                ->execute();
+
+            // Convert to array format for caching
+            $booksData = array_map(function ($book) {
+                return $book->toArray();
+            }, $books);
+
+            // Cache the result for 1 hour (unpopular books don't change frequently)
+            $unpopularCacheTtl = 3600; // 1 hour
+            $this->cache->set($cacheKey, $booksData, $unpopularCacheTtl);
         }
 
         return [
