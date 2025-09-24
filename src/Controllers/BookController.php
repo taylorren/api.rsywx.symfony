@@ -425,7 +425,8 @@ class BookController
                             "location" => new OA\Property(property: "location", type: "string", example: "书房"),
                             "cover_uri" => new OA\Property(property: "cover_uri", type: "string", example: "https://api.rsywx.com/covers/01234.jpg"),
                             "last_visited" => new OA\Property(property: "last_visited", type: "string", example: "2025-07-27 12:30:00"),
-                            "visit_country" => new OA\Property(property: "visit_country", type: "string", example: "China", description: "Country where the book was accessed", nullable: true)
+                            "visit_country" => new OA\Property(property: "visit_country", type: "string", example: "China", description: "Country where the book was accessed", nullable: true),
+                            "total_visits" => new OA\Property(property: "total_visits", type: "integer", example: 15, description: "Total number of times this book has been visited")
                         ]
                     )
                 ),

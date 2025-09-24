@@ -146,9 +146,17 @@ class BookQueryBuilder
             LIMIT ' . (int)$count . '
         ) recent_visits ON b.id = recent_visits.bookid');
         
+        // Add total visit counts for each book
+        $this->addJoin('LEFT JOIN (
+            SELECT bookid, COUNT(*) as total_visits
+            FROM book_visit 
+            GROUP BY bookid
+        ) visit_stats ON b.id = visit_stats.bookid');
+        
         // Include visit fields - country is more useful than visit region
         $this->addField('recent_visits.visitwhen', 'last_visited');
         $this->addField('recent_visits.country', 'visit_country');
+        $this->addField('COALESCE(visit_stats.total_visits, 0)', 'total_visits');
         
         $this->addOrderBy('recent_visits.visitwhen DESC');
         return $this;
