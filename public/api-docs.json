@@ -629,6 +629,11 @@
                                                         "type": "string",
                                                         "example": "China",
                                                         "nullable": true
+                                                    },
+                                                    "total_visits": {
+                                                        "description": "Total number of times this book has been visited",
+                                                        "type": "integer",
+                                                        "example": 15
                                                     }
                                                 },
                                                 "type": "object"
