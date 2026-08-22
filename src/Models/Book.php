@@ -324,8 +324,10 @@ class Book
         // If not cached, fetch from database using unified system
         if ($booksData === null) {
             $queryBuilder = new BookQueryBuilder();
+            // forgotten() now uses the denormalized b.last_visit column and
+            // produces all the required fields (last_visited, days_since_visit,
+            // total_visits), so no extra field groups are needed.
             $books = $queryBuilder
-                ->includeFields(['computed'])
                 ->forgotten($count)
                 ->execute();
 
@@ -343,7 +345,10 @@ class Book
             'from_cache' => $fromCache
         ];
     }
-    // TODO: Based on SQL performance analysis, maybe we should add a new filed in Book_Book to capture its latest visit date as a redundancy and quick SQL
+    // DONE: book_book.last_visit now captures each book's latest visit date as a
+    // denormalized redundancy, so /books/forgotten no longer computes
+    // MAX(visitwhen) per book. It is maintained by a DB trigger that fires when
+    // a new row is inserted into book_visit.
 
     public function clearForgottenBooksCache($count = null)
     {

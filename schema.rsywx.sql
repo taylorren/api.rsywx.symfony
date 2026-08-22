@@ -46,11 +46,13 @@ CREATE TABLE `book_book` (
   `intro` longtext CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `instock` tinyint(1) NOT NULL,
   `location` varchar(3) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `last_visit` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `bookid_UNIQUE` (`bookid`),
   KEY `IDX_D278E839741D53CD` (`place`) USING BTREE,
   KEY `IDX_D278E8399CE8D546` (`publisher`) USING BTREE,
-  KEY `idx_book_book_nl` (`location`)
+  KEY `idx_book_book_nl` (`location`),
+  KEY `idx_book_lastvisit` (`last_visit`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2078 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

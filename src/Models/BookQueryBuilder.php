@@ -164,19 +164,24 @@ class BookQueryBuilder
     
     public function forgotten($count = 1)
     {
-        // Use subquery for oldest last visits
-        $this->addJoin('INNER JOIN (
-            SELECT v.bookid, MAX(v.visitwhen) as last_visited
-            FROM book_visit v 
-            INNER JOIN book_book b2 ON v.bookid = b2.id
-            WHERE b2.location NOT IN (\'na\', \'--\')
-            GROUP BY v.bookid
-            ORDER BY last_visited ASC 
-            LIMIT ' . (int)$count . '
-        ) forgotten_visits ON b.id = forgotten_visits.bookid');
-        
-        $this->addField('forgotten_visits.last_visited', 'last_visited');
-        $this->addOrderBy('forgotten_visits.last_visited ASC');
+        // last_visit is denormalized onto book_book (b.last_visit), so the
+        // per-book MAX(visitwhen) subquery is no longer needed.
+        //
+        // A lightweight book_visit COUNT join is kept only to expose the
+        // total_visits field that the /books/forgotten response currently
+        // includes (for API compatibility).
+        $this->addJoin('LEFT JOIN (
+            SELECT bookid, COUNT(*) as total_visits
+            FROM book_visit
+            GROUP BY bookid
+        ) forgotten_stats ON b.id = forgotten_stats.bookid');
+
+        $this->addField('COALESCE(forgotten_stats.total_visits, 0)', 'total_visits');
+        $this->addField('b.last_visit', 'last_visited');
+        $this->addField('DATEDIFF(NOW(), b.last_visit)', 'days_since_visit');
+
+        $this->addOrderBy('b.last_visit ASC');
+        $this->limit($count);
         return $this;
     }
     
