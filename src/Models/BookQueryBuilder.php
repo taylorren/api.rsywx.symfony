@@ -80,15 +80,12 @@ class BookQueryBuilder
     
     private function includeVisitStats()
     {
-        // For books that need total visit counts
-        $this->addJoin('LEFT JOIN (
-            SELECT bookid, COUNT(*) as total_visits, MAX(visitwhen) as last_visited
-            FROM book_visit 
-            GROUP BY bookid
-        ) visit_stats ON b.id = visit_stats.bookid');
-        
-        $this->addField('COALESCE(visit_stats.total_visits, 0)', 'total_visits');
-        $this->addField('visit_stats.last_visited', 'last_visited');
+        // total_visits and last_visit are denormalized onto book_book
+        // (b.total_visits / b.last_visit, both bumped by the book_visit INSERT
+        // trigger), so the COUNT(*)/MAX() GROUP BY over book_visit is no longer
+        // needed.
+        $this->addField('COALESCE(b.total_visits, 0)', 'total_visits');
+        $this->addField('b.last_visit', 'last_visited');
         
         return $this;
     }
@@ -99,7 +96,7 @@ class BookQueryBuilder
         $this->includeVisitStats();
         
         // Add computed fields like days_since_visit, years_ago
-        $this->addField('DATEDIFF(NOW(), visit_stats.last_visited)', 'days_since_visit');
+        $this->addField('DATEDIFF(NOW(), b.last_visit)', 'days_since_visit');
         
         return $this;
     }
@@ -146,17 +143,11 @@ class BookQueryBuilder
             LIMIT ' . (int)$count . '
         ) recent_visits ON b.id = recent_visits.bookid');
         
-        // Add total visit counts for each book
-        $this->addJoin('LEFT JOIN (
-            SELECT bookid, COUNT(*) as total_visits
-            FROM book_visit 
-            GROUP BY bookid
-        ) visit_stats ON b.id = visit_stats.bookid');
-        
-        // Include visit fields - country is more useful than visit region
+        // total_visits is denormalized onto book_book (b.total_visits, bumped
+        // by the book_visit INSERT trigger alongside last_visit).
         $this->addField('recent_visits.visitwhen', 'last_visited');
         $this->addField('recent_visits.country', 'visit_country');
-        $this->addField('COALESCE(visit_stats.total_visits, 0)', 'total_visits');
+        $this->addField('COALESCE(b.total_visits, 0)', 'total_visits');
         
         $this->addOrderBy('recent_visits.visitwhen DESC');
         return $this;
@@ -164,19 +155,10 @@ class BookQueryBuilder
     
     public function forgotten($count = 1)
     {
-        // last_visit is denormalized onto book_book (b.last_visit), so the
-        // per-book MAX(visitwhen) subquery is no longer needed.
-        //
-        // A lightweight book_visit COUNT join is kept only to expose the
-        // total_visits field that the /books/forgotten response currently
-        // includes (for API compatibility).
-        $this->addJoin('LEFT JOIN (
-            SELECT bookid, COUNT(*) as total_visits
-            FROM book_visit
-            GROUP BY bookid
-        ) forgotten_stats ON b.id = forgotten_stats.bookid');
-
-        $this->addField('COALESCE(forgotten_stats.total_visits, 0)', 'total_visits');
+        // last_visit and total_visits are denormalized onto book_book
+        // (b.last_visit / b.total_visits, both bumped by the book_visit INSERT
+        // trigger), so this is a single lightweight query with no book_visit join.
+        $this->addField('COALESCE(b.total_visits, 0)', 'total_visits');
         $this->addField('b.last_visit', 'last_visited');
         $this->addField('DATEDIFF(NOW(), b.last_visit)', 'days_since_visit');
 
@@ -214,22 +196,22 @@ class BookQueryBuilder
     
     public function mostPopular($count = 1)
     {
-        // Ensure visit_stats is included for ordering by total_visits
+        // Ensure total_visits is exposed for ordering
         $this->includeVisitStats();
         
-        // Order by total visits descending, then by book ID descending for consistency
-        $this->addOrderBy('COALESCE(visit_stats.total_visits, 0) DESC, b.id DESC');
+        // Order by the denormalized column (descending), then book ID descending for consistency
+        $this->addOrderBy('b.total_visits DESC, b.id DESC');
         $this->limit($count);
         return $this;
     }
     
     public function leastPopular($count = 1)
     {
-        // Ensure visit_stats is included for ordering by total_visits
+        // Ensure total_visits is exposed for ordering
         $this->includeVisitStats();
         
-        // Order by total visits ascending (least popular first), then by book ID descending for consistency
-        $this->addOrderBy('COALESCE(visit_stats.total_visits, 0) ASC, b.id DESC');
+        // Order by the denormalized column (ascending), then book ID descending for consistency
+        $this->addOrderBy('b.total_visits ASC, b.id DESC');
         $this->limit($count);
         return $this;
     }

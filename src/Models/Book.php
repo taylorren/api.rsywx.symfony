@@ -140,12 +140,15 @@ class Book
 
     private function getBookVisitData($bookId)
     {
+        // total_visits and last_visit are denormalized onto book_book (both
+        // bumped by the book_visit INSERT trigger), so read them straight off
+        // the row instead of aggregating book_visit per book.
         $query = "
             SELECT 
-                COUNT(*) as total_visits,
-                MAX(visitwhen) as last_visited
-            FROM book_visit 
-            WHERE bookid = ?
+                total_visits,
+                last_visit
+            FROM book_book 
+            WHERE id = ?
         ";
 
         $stmt = $this->db->prepare($query);
@@ -153,8 +156,8 @@ class Book
         $result = $stmt->fetch();
 
         return [
-            'total_visits' => (int)$result['total_visits'],
-            'last_visited' => $result['last_visited']
+            'total_visits' => $result ? (int)$result['total_visits'] : 0,
+            'last_visited' => $result ? $result['last_visit'] : null
         ];
     }
 

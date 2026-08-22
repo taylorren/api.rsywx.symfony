@@ -50,12 +50,19 @@ class BookStatus
 
     private function fetchCollectionStatusFromDb()
     {
+        // Single aggregate pass over book_book (the table is small and fully
+        // indexed via idx_book_book_nl on location). Previously this issued four
+        // separate scalar subqueries, each rescanning the table. total_visits
+        // reads the denormalized counter column (maintained by the book_visit
+        // trigger), avoiding a full scan of book_visit (~2.3M rows).
         $query = "
-            SELECT 
-                (SELECT COUNT(*) FROM book_book WHERE location NOT IN ('na', '--')) as total_books,
-                (SELECT COALESCE(SUM(page), 0) FROM book_book WHERE location NOT IN ('na', '--')) as total_pages,
-                (SELECT COALESCE(SUM(kword), 0) FROM book_book WHERE location NOT IN ('na', '--')) as total_kwords,
-                (SELECT COUNT(*) FROM book_visit) as total_visits
+            SELECT
+                COUNT(*)                          AS total_books,
+                COALESCE(SUM(page), 0)            AS total_pages,
+                COALESCE(SUM(kword), 0)           AS total_kwords,
+                COALESCE(SUM(total_visits), 0)    AS total_visits
+            FROM book_book
+            WHERE location NOT IN ('na', '--')
         ";
 
         $stmt = $this->db->query($query);

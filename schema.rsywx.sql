@@ -22,6 +22,10 @@
 DROP TABLE IF EXISTS `book_book`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
+-- `total_visits` is a denormalized counter (`int unsigned NOT NULL DEFAULT 0`)
+-- bumped by the `trg_book_visit_last_visit` trigger on every book_visit INSERT,
+-- alongside `last_visit`. `idx_book_visits` supports index-driven ordering for
+-- the popular / least-popular book lists.
 CREATE TABLE `book_book` (
   `id` int NOT NULL AUTO_INCREMENT,
   `place` int DEFAULT NULL,
@@ -47,12 +51,14 @@ CREATE TABLE `book_book` (
   `instock` tinyint(1) NOT NULL,
   `location` varchar(3) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `last_visit` timestamp NULL DEFAULT NULL,
+  `total_visits` int unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `bookid_UNIQUE` (`bookid`),
   KEY `IDX_D278E839741D53CD` (`place`) USING BTREE,
   KEY `IDX_D278E8399CE8D546` (`publisher`) USING BTREE,
   KEY `idx_book_book_nl` (`location`),
-  KEY `idx_book_lastvisit` (`last_visit`)
+  KEY `idx_book_lastvisit` (`last_visit`),
+  KEY `idx_book_visits` (`total_visits`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2078 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -159,6 +165,30 @@ CREATE TABLE `book_visit` (
   KEY `IDX_4DBCFC4036BB5955` (`bookid`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=2351071 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Trigger: maintain the denormalized book_book counters (last_visit and
+-- total_visits) on every book_visit INSERT. This is the single source of truth
+-- for the denormalization — keep it in sync with the migration file.
+--
+
+DROP TRIGGER IF EXISTS `trg_book_visit_last_visit`;
+DELIMITER $$
+CREATE TRIGGER `trg_book_visit_last_visit`
+AFTER INSERT ON `book_visit`
+FOR EACH ROW
+BEGIN
+    IF NEW.bookid IS NOT NULL THEN
+        UPDATE `book_book`
+        SET last_visit = CASE
+                WHEN last_visit IS NULL OR NEW.visitwhen > last_visit THEN NEW.visitwhen
+                ELSE last_visit
+            END,
+            total_visits = total_visits + 1
+        WHERE id = NEW.bookid;
+    END IF;
+END$$
+DELIMITER ;
 
 --
 -- Table structure for table `lakers`
