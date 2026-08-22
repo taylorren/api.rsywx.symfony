@@ -478,13 +478,16 @@ class Book
         $currentDate = new \DateTime($startDate);
         $endDateTime = new \DateTime($endDate);
 
-        // Create array indexed by date for quick lookup
+        // Create array indexed by date for quick lookup.
+        // NOTE: the grouping SQL above only selects visit_date and visit_count.
+        // day_of_week is NOT available on the row, so it is computed from the
+        // date in PHP below. Reading $row['day_of_week'] here would raise an
+        // "Undefined array key" warning each request; under nginx + PHP-FPM
+        // that stray output can be parsed as part of the response header block
+        // and cause an "upstream sent too big header" error.
         $visitsByDate = [];
         foreach ($results as $row) {
-            $visitsByDate[$row['visit_date']] = [
-                'visit_count' => (int)$row['visit_count'],
-                'day_of_week' => $row['day_of_week']
-            ];
+            $visitsByDate[$row['visit_date']] = (int)$row['visit_count'];
             $totalVisits += (int)$row['visit_count'];
         }
 
@@ -493,19 +496,11 @@ class Book
             $dateStr = $currentDate->format('Y-m-d');
             $dayOfWeek = $currentDate->format('l'); // Full day name
 
-            if (isset($visitsByDate[$dateStr])) {
-                $dailyCounts[] = [
-                    'date' => $dateStr,
-                    'visit_count' => $visitsByDate[$dateStr]['visit_count'],
-                    'day_of_week' => $visitsByDate[$dateStr]['day_of_week']
-                ];
-            } else {
-                $dailyCounts[] = [
-                    'date' => $dateStr,
-                    'visit_count' => 0,
-                    'day_of_week' => $dayOfWeek
-                ];
-            }
+            $dailyCounts[] = [
+                'date' => $dateStr,
+                'visit_count' => $visitsByDate[$dateStr] ?? 0,
+                'day_of_week' => $dayOfWeek
+            ];
 
             $currentDate->add(new \DateInterval('P1D'));
         }
