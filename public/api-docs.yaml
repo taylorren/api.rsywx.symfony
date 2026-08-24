@@ -89,8 +89,8 @@ paths:
     get:
       tags:
         - 'Book Lists'
-      summary: 'Get latest purchased books'
-      description: 'Returns the most recently purchased books, ordered by purchase date (newest first)'
+      summary: 'Get latest books'
+      description: 'Returns the most recently added books, ordered by ID (newest first)'
       operationId: 2d0d1d01b2ee495d9fbd3994c25136f1
       parameters:
         -
@@ -113,7 +113,7 @@ paths:
             example: false
       responses:
         '200':
-          description: 'Latest purchased books'
+          description: 'Latest books'
           content:
             application/json:
               schema:

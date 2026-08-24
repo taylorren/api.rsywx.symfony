@@ -216,8 +216,8 @@ class BookController
 
     #[OA\Get(
         path: "/books/latest/{count}",
-        summary: "Get latest purchased books",
-        description: "Returns the most recently purchased books, ordered by purchase date (newest first)",
+        summary: "Get latest books",
+        description: "Returns the most recently added books, ordered by ID (newest first)",
         tags: ["Book Lists"],
         security: [["ApiKeyAuth" => []]]
     )]
@@ -237,7 +237,7 @@ class BookController
     )]
     #[OA\Response(
         response: 200,
-        description: "Latest purchased books",
+        description: "Latest books",
         content: new OA\JsonContent(
             properties: [
                 "success" => new OA\Property(property: "success", type: "boolean", example: true),

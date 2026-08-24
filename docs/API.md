@@ -1,7 +1,6 @@
 # RSYWX Library API — Frontend Reference
 
 Human-friendly reference for consuming the RSYWX API from a frontend.
-For the machine-readable spec, see `public/api-docs.yaml` (OpenAPI 3.0).
 
 ---
 
@@ -210,8 +209,8 @@ All segments optional. `type` one of `author | title | tag | misc | id`
 
 ---
 
-#### `GET /books/latest[/{count}]` — Latest purchased
-Path: `count` (default `1`, max `50`). Ordered by newest purchase first.
+#### `GET /books/latest[/{count}]` — Latest books
+Path: `count` (default `1`, max `50`). Ordered by ID descending (newest additions first, same ordering as `/books/list`).
 
 List item:
 ```jsonc
@@ -310,12 +309,55 @@ Path: `count` (**required**, 1–50). Ordered by `total_visits` ascending
 
 ---
 
-#### `GET /books/today[/{month}/{date}]` — Books for a date
-- `GET /books/today` — today's books (matching `purchdate` across years).
+#### `GET /books/today[/{month}/{date}]` — On this day in history
+- `GET /books/today` — books bought on **today's** month/day in any previous year.
 - `GET /books/today/{month}/{date}` — books bought on that month/day in history.
 
-> **Verify on the wire** — the OpenAPI lists this under books; confirm the exact
-> item field names before building the UI.
+**Behavior** — a simple "memory recollection" widget; **no tags**, no reviews, no
+visit stats. Only purchase + core fields are returned so the frontend can render
+it with zero extra calculation.
+
+- **Excludes the current year** — only books with `YEAR(purchdate) < currentYear`
+  are returned (a book bought today appears here starting next year).
+- **Excludes** books located in `na` / `--`.
+- Ordered by `purchdate` DESC (most recent purchase first).
+- The frontend always passes **today's** own month/day, so every result is
+  "exactly N years today" — `years_ago` needs no further math.
+- Cached **24h**; `?refresh=true` forces a recompute.
+
+`requested_date` is a **front-end convenience label** (current year + the
+requested month/day) so the UI can display "on this day" without any date
+calculation of its own.
+
+```jsonc
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1234, "bookid": "01234",
+      "title": "历史书籍", "author": "作者姓名",
+      "translated": false, "copyrighter": null, "region": "中国",
+      "location": "f3",
+      "purchdate": "2020-08-23", "price": 25.50,
+      "place_name": "购买地点", "publisher_name": "出版社名称",
+      "cover_uri": "https://api.rsywx.com/covers/01234.jpg",
+      "years_ago": 6                      // exact "N years today"
+    }
+  ],
+  "cached": false,
+  "date_info": {
+    "requested_date": "2026-08-23",        // label only — current year + month/day
+    "month_day": "08-23",
+    "is_today": true
+  }
+}
+```
+
+HTTP `400` for invalid month/day:
+```json
+{ "success": false, "message": "Invalid date: month must be 1-12, date must be 1-31" }
+```
+`Feb 29` is accepted (valid in leap years). A missing book → empty `data` array.
 
 ---
 
@@ -342,8 +384,8 @@ Query: `days` (default `30`, max `365`). Useful for trend charts.
 #### `GET /books/{bookid}/related[/{count}]` — Related books
 Path: `bookid` (5 digits), `count` optional. Books sharing tags/category.
 
-> **Verify on the wire** — returns a list in `/books/list`-like shape; confirm
-> exact fields.
+> **PENDING** — not yet implemented / defined. Do not build against this.
+> Returns a list in a `/books/list`-like shape; exact fields to be confirmed.
 
 ---
 
@@ -517,6 +559,7 @@ HTTP `400` for invalid month/day:
 | `/misc/weather/*` | 10-30 min | external API |
 | `/misc/wotd`, `/misc/qotd` | short | random content |
 | `/books/last_visited`, `/forgotten`, `/popular` | may be cached | varies |
+| `/books/today[/{month}/{date}]` | 24h | `?refresh=true` to force |
 
 For a freshly-updated value, append `?refresh=true`.
 
