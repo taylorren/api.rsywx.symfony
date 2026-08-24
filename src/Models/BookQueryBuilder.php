@@ -121,7 +121,7 @@ class BookQueryBuilder
     
     public function latest($count = 1)
     {
-        $this->addOrderBy('b.purchdate DESC, b.id DESC');
+        $this->addOrderBy('b.id DESC');
         $this->limit($count);
         return $this;
     }
