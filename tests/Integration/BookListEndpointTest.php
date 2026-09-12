@@ -129,6 +129,24 @@ class BookListEndpointTest extends BaseTestCase
     }
 
     /**
+     * Test that "id" is NOT a list type: an explicit bookid is a one-or-none
+     * lookup served by GET /books/{bookid}, never a general list/search.
+     */
+    public function testIdIsNotAValidListType()
+    {
+        $request = $this->createRequest('GET', '/api/v1/books/list/id/00666/1', [
+            'X-API-Key' => $this->validApiKey
+        ]);
+        $response = $this->runApp($request);
+
+        $this->assertEquals(500, $response->getStatusCode());
+        $data = json_decode((string)$response->getBody(), true);
+
+        $this->assertFalse($data['success']);
+        $this->assertStringContainsString('Invalid type', $data['message']);
+    }
+
+    /**
      * Test invalid type
      */
     public function testInvalidType()

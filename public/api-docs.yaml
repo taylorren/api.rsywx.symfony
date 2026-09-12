@@ -388,22 +388,21 @@ paths:
         -
           name: type
           in: path
-          description: 'Search type: author, title, tag, misc, id (default: id)'
+          description: 'List type: author, title, tags, or misc (default: title). Explicit bookids are not listed here — use GET /books/{bookid} for a one-or-none lookup'
           required: false
           schema:
             type: string
-            default: id
+            default: title
             enum:
               - author
               - title
-              - tag
+              - tags
               - misc
-              - id
             example: author
         -
           name: value
           in: path
-          description: 'Search value (optional for type=id)'
+          description: "Search value (use '-' for a wildcard / unfiltered list)"
           required: false
           schema:
             type: string

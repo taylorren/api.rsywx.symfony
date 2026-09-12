@@ -866,14 +866,14 @@ class BookController
     #[OA\Parameter(
         name: "type",
         in: "path",
-        description: "Search type: author, title, tag, misc, id (default: id)",
+        description: "List type: author, title, tags, or misc (default: title). Explicit bookids are not listed here — use GET /books/{bookid} for a one-or-none lookup",
         required: false,
-        schema: new OA\Schema(type: "string", enum: ["author", "title", "tag", "misc", "id"], example: "author", default: "id")
+        schema: new OA\Schema(type: "string", enum: ["author", "title", "tags", "misc"], example: "author", default: "title")
     )]
     #[OA\Parameter(
         name: "value",
         in: "path",
-        description: "Search value (optional for type=id)",
+        description: "Search value (use '-' for a wildcard / unfiltered list)",
         required: false,
         schema: new OA\Schema(type: "string", example: "卡尔维诺")
     )]
@@ -932,7 +932,9 @@ class BookController
                 $value = '-';
                 $page = (int)$args['type'];
             } else {
-                // Set default type to 'title' and validate allowed types
+                // Set default type to 'title' and validate allowed types.
+                // Note: there is deliberately no "id" type here — an explicit
+                // bookid is a one-or-none lookup served by GET /books/{bookid}.
                 $type = $args['type'] ?? 'title';
                 if (!in_array($type, ['title', 'author', 'tags', 'misc'])) {
                     throw new \InvalidArgumentException("Invalid type. Allowed types are: title, author, tags, misc");
@@ -940,7 +942,7 @@ class BookController
 
                 // Handle value parameter with special case for '-'
                 $value = isset($args['value']) ? urldecode($args['value']) : '-';  // default to '-' for wildcard
-                
+
                 $page = isset($args['page']) ? (int)$args['page'] : 1;
             }
             
