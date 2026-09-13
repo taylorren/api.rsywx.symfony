@@ -74,7 +74,8 @@ $app->add(function (Request $request, $handler) {
     $uri = $request->getUri()->getPath();
 
     // Skip auth for documentation, health check, static files, and OPTIONS requests
-    if ($uri === '/' || $uri === '/health' || strpos($uri, '/api-docs') === 0 || $request->getMethod() === 'OPTIONS') {
+    $healthAlias = '/api/' . ($_ENV['API_VERSION'] ?? 'v1') . '/health';
+    if ($uri === '/' || $uri === '/health' || $uri === $healthAlias || strpos($uri, '/api-docs') === 0 || $request->getMethod() === 'OPTIONS') {
         return $handler->handle($request);
     }
 
@@ -116,6 +117,9 @@ $app->get('/health', function (Request $request, Response $response) {
 
 // API routes
 $app->group('/api/' . $_ENV['API_VERSION'], function ($group) {
+    // Health check alias under the versioned API (also available at /health)
+    $group->get('/health', \App\Controllers\SystemController::class . ':health');
+
     // Book endpoints
     $group->get('/books/status', \App\Controllers\BookController::class . ':status');
     $group->get('/books/latest[/{count:[0-9]+}]', \App\Controllers\BookController::class . ':latest');

@@ -87,9 +87,9 @@ Some endpoints add **`message`** (on success or error) and/or **`pagination`**.
 ### 4.1 System
 
 #### `GET /health` — Health check *(no auth)*
-> Located at the **root domain**: `https://api.rsywx.com/health`
-> (outside `/api/v1`; no version prefix and no API key required).
-> Calling `https://api.rsywx.com/api/v1/health` would 404.
+> Available at **both** locations, both without an API key:
+> - `https://api.rsywx.com/health` (root, stable across versions — preferred for liveness probes)
+> - `https://api.rsywx.com/api/v1/health` (versioned alias)
 
 Returns **HTTP 200** and:
 ```json

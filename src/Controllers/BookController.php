@@ -941,7 +941,10 @@ class BookController
                 }
 
                 // Handle value parameter with special case for '-'
-                $value = isset($args['value']) ? urldecode($args['value']) : '-';  // default to '-' for wildcard
+                // Note: Slim has already URL-decoded route arguments, so no
+                // extra urldecode() here — decoding again corrupts values
+                // containing '+', '/', or literal '%' sequences (e.g. C++).
+                $value = $args['value'] ?? '-';  // default to '-' for wildcard
 
                 $page = isset($args['page']) ? (int)$args['page'] : 1;
             }
@@ -969,7 +972,7 @@ class BookController
     }
 
     #[OA\Post(
-        path: "/books/{sbookid}/tags",
+        path: "/books/{bookid}/tags",
         summary: "Add tags to a book",
         description: "Add one or more tags to a book. Duplicate tags are ignored.",
         tags: ["Book Management"],
@@ -1052,7 +1055,7 @@ class BookController
     }
 
     #[OA\Get(
-        path: "/books/{bookid}/related/{count}",
+        path: "/books/{bookid}/related/{count?}",
         summary: "Get related books",
         description: "Returns books related to the specified book based on tags, author, category, and behavioral patterns",
         tags: ["Book Recommendations"],

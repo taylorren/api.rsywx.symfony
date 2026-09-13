@@ -156,7 +156,7 @@ class ReadingController
     }
 
     #[OA\Get(
-        path: "/readings/reviews/{page}",
+        path: "/readings/reviews/{page?}",
         summary: "Get Reviews with Pagination",
         description: "Returns reviews with pagination support, ordered by date (newest first). Fixed at 9 reviews per page for consistent frontend display.",
         tags: ["Reading Statistics"],

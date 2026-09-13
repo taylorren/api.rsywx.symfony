@@ -431,13 +431,13 @@ paths:
       security:
         -
           ApiKeyAuth: []
-  '/books/{sbookid}/tags':
+  '/books/{bookid}/tags':
     post:
       tags:
         - 'Book Management'
       summary: 'Add tags to a book'
       description: 'Add one or more tags to a book. Duplicate tags are ignored.'
-      operationId: e2b0b3a137fca381a02d79cdd4c161aa
+      operationId: beb0d1b56bd77e4b5399290df112d80f
       parameters:
         -
           name: bookid
@@ -474,13 +474,13 @@ paths:
       security:
         -
           ApiKeyAuth: []
-  '/books/{bookid}/related/{count}':
+  '/books/{bookid}/related/{count?}':
     get:
       tags:
         - 'Book Recommendations'
       summary: 'Get related books'
       description: 'Returns books related to the specified book based on tags, author, category, and behavioral patterns'
-      operationId: c7aea506b7954e75813ecbde867b0184
+      operationId: 17f442d146f8f1dd0da9820e27ce4430
       parameters:
         -
           name: bookid
@@ -815,13 +815,13 @@ paths:
       security:
         -
           ApiKeyAuth: []
-  '/readings/reviews/{page}':
+  '/readings/reviews/{page?}':
     get:
       tags:
         - 'Reading Statistics'
       summary: 'Get Reviews with Pagination'
       description: 'Returns reviews with pagination support, ordered by date (newest first). Fixed at 9 reviews per page for consistent frontend display.'
-      operationId: bad8f19386ac17e745eda0efbc3850dd
+      operationId: c13a3d07ab60555d2d2ef30b271d17c9
       parameters:
         -
           name: page
