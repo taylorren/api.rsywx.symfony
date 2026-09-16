@@ -6,9 +6,9 @@ use App\Cache\MemoryCache;
 
 class Weather
 {
-    private $cache;
-    private $apiKey;
-    private $baseUrl = 'https://ne5rk4nwr6.re.qweatherapi.com/v7';
+    private MemoryCache $cache;
+    private ?string $apiKey;
+    private string $baseUrl = 'https://ne5rk4nwr6.re.qweatherapi.com/v7';
 
     public function __construct()
     {
@@ -20,7 +20,7 @@ class Weather
         }
     }
 
-    public function getCurrentWeather($location = '101190401', $forceRefresh = false)
+    public function getCurrentWeather(string $location = '101190401', bool $forceRefresh = false): array
     {
         $cacheKey = "weather_current_{$location}";
 
@@ -49,7 +49,7 @@ class Weather
         ];
     }
 
-    public function getWeatherForecast($location = '101190401', $days = 3, $forceRefresh = false)
+    public function getWeatherForecast(string $location = '101190401', int $days = 3, bool $forceRefresh = false): array
     {
         $cacheKey = "weather_forecast_{$location}_{$days}d";
 
@@ -78,7 +78,7 @@ class Weather
         ];
     }
 
-    private function fetchCurrentWeatherFromApi($location)
+    private function fetchCurrentWeatherFromApi(string $location): array
     {
         $url = "{$this->baseUrl}/weather/now";
         $params = [
@@ -113,7 +113,7 @@ class Weather
         ];
     }
 
-    private function fetchWeatherForecastFromApi($location, $days)
+    private function fetchWeatherForecastFromApi(string $location, int $days): array
     {
         $url = "{$this->baseUrl}/weather/{$days}d";
         $params = [
@@ -157,7 +157,7 @@ class Weather
         ];
     }
 
-    private function makeApiRequest($url, $params)
+    private function makeApiRequest(string $url, array $params): array
     {
         $queryString = http_build_query($params);
         $fullUrl = "{$url}?{$queryString}";
@@ -193,7 +193,7 @@ class Weather
         return $decoded;
     }
 
-    public function clearWeatherCache($location = null)
+    public function clearWeatherCache(?string $location = null): void
     {
         if ($location) {
             $this->cache->delete("weather_current_{$location}");

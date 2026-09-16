@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Database\Connection;
 use App\Cache\MemoryCache;
+use PDO;
 
 class Book
 {
-    private $db;
-    private $cache;
-    private $cacheTtl = 86400; // 24 hours
+    private PDO $db;
+    private MemoryCache $cache;
+    private int $cacheTtl = 86400; // 24 hours
 
     public function __construct()
     {
@@ -17,7 +18,7 @@ class Book
         $this->cache = new MemoryCache();
     }
 
-    public function getBookDetail($bookid, $forceRefresh = false)
+    public function getBookDetail(string $bookid, bool $forceRefresh = false): ?array
     {
         $cacheKey = "book_detail_{$bookid}";
 
@@ -54,7 +55,7 @@ class Book
         ];
     }
 
-    private function fetchBookDataFromDb($bookid)
+    private function fetchBookDataFromDb(string $bookid): ?array
     {
         // Get complete book information with all related data - FULL COVERAGE
         $query = "
@@ -108,7 +109,7 @@ class Book
         return $book;
     }
 
-    private function getBookTags($bookId)
+    private function getBookTags(int $bookId): array
     {
         $query = "SELECT tag FROM book_taglist WHERE bid = ? ORDER BY tag";
         $stmt = $this->db->prepare($query);
@@ -122,7 +123,7 @@ class Book
         return $tags;
     }
 
-    private function getBookReviews($bookId)
+    private function getBookReviews(int $bookId): array
     {
         $query = "
             SELECT r.id, r.title, r.datein, r.uri, r.feature
@@ -138,7 +139,7 @@ class Book
         return $stmt->fetchAll();
     }
 
-    private function getBookVisitData($bookId)
+    private function getBookVisitData(int $bookId): array
     {
         // total_visits and last_visit are denormalized onto book_book (both
         // bumped by the book_visit INSERT trigger), so read them straight off
@@ -161,7 +162,7 @@ class Book
         ];
     }
 
-    public function getLatestBooks($count = 1, $forceRefresh = false)
+    public function getLatestBooks(int $count = 1, bool $forceRefresh = false): array
     {
         $cacheKey = "latest_books_{$count}";
 
@@ -196,13 +197,13 @@ class Book
         ];
     }
 
-    public function clearBookCache($bookid)
+    public function clearBookCache(string $bookid): bool
     {
         $cacheKey = "book_detail_{$bookid}";
         return $this->cache->delete($cacheKey);
     }
 
-    public function clearLatestBooksCache($count = null)
+    public function clearLatestBooksCache(?int $count = null): bool
     {
         if ($count !== null) {
             $cacheKey = "latest_books_{$count}";
@@ -213,7 +214,7 @@ class Book
         return $this->cache->clear();
     }
 
-    public function getRandomBooks($count = 1, $forceRefresh = false)
+    public function getRandomBooks(int $count = 1, bool $forceRefresh = false): array
     {
         $cacheKey = "random_books_{$count}";
 
@@ -251,7 +252,7 @@ class Book
         ];
     }
 
-    public function clearRandomBooksCache($count = null)
+    public function clearRandomBooksCache(?int $count = null): bool
     {
         if ($count !== null) {
             $cacheKey = "random_books_{$count}";
@@ -262,7 +263,7 @@ class Book
         return $this->cache->clear();
     }
 
-    public function getLastVisitedBooks($count = 1, $forceRefresh = false)
+    public function getLastVisitedBooks(int $count = 1, bool $forceRefresh = false): array
     {
         $cacheKey = "last_visited_books_{$count}";
 
@@ -298,7 +299,7 @@ class Book
         ];
     }
 
-    public function clearLastVisitedBooksCache($count = null)
+    public function clearLastVisitedBooksCache(?int $count = null): bool
     {
         if ($count !== null) {
             $cacheKey = "last_visited_books_{$count}";
@@ -309,7 +310,7 @@ class Book
         return $this->cache->clear();
     }
 
-    public function getForgottenBooks($count = 1, $forceRefresh = false)
+    public function getForgottenBooks(int $count = 1, bool $forceRefresh = false): array
     {
         $cacheKey = "forgotten_books_{$count}";
 
@@ -353,7 +354,7 @@ class Book
     // MAX(visitwhen) per book. It is maintained by a DB trigger that fires when
     // a new row is inserted into book_visit.
 
-    public function clearForgottenBooksCache($count = null)
+    public function clearForgottenBooksCache(?int $count = null): bool
     {
         if ($count !== null) {
             $cacheKey = "forgotten_books_{$count}";
@@ -364,7 +365,7 @@ class Book
         return $this->cache->clear();
     }
 
-    public function getTodaysBooks($month = null, $date = null, $forceRefresh = false)
+    public function getTodaysBooks(?int $month = null, ?int $date = null, bool $forceRefresh = false): array
     {
         // Default to today's date if not provided
         $month = $month ?? (int)date('n');
@@ -418,14 +419,14 @@ class Book
         ];
     }
 
-    public function clearTodaysBooksCache()
+    public function clearTodaysBooksCache(): bool
     {
         $monthDay = date('m-d');
         $cacheKey = "todays_books_{$monthDay}";
         return $this->cache->delete($cacheKey);
     }
 
-    public function getVisitHistory($days = 30, $forceRefresh = false)
+    public function getVisitHistory(int $days = 30, bool $forceRefresh = false): array
     {
         $cacheKey = "visit_history_{$days}";
 
@@ -455,7 +456,7 @@ class Book
         ];
     }
 
-    private function fetchVisitHistoryFromDb($days)
+    private function fetchVisitHistoryFromDb(int $days): array
     {
         $endDate = date('Y-m-d');
         $startDate = date('Y-m-d', strtotime("-{$days} days"));
@@ -519,7 +520,7 @@ class Book
         ];
     }
 
-    public function clearVisitHistoryCache($days = null)
+    public function clearVisitHistoryCache(?int $days = null): bool
     {
         if ($days !== null) {
             $cacheKey = "visit_history_{$days}";
@@ -530,7 +531,7 @@ class Book
         return $this->cache->clear();
     }
 
-    public function listBooks($type = 'title', $value = '-', $page = 1, $perPage = null)
+    public function listBooks(string $type = 'title', string $value = '-', int $page = 1, ?int $perPage = null): array
     {
         if ($perPage === null) {
             $perPage = (int)($_ENV['LIST_PER_PAGE'] ?? 10);
@@ -583,7 +584,7 @@ class Book
         ];
     }
 
-    private function updateVisit($bookId)
+    private function updateVisit(int $bookId): void
     {
         // Get client IP address
         $ipAddress = $this->getClientIpAddress();
@@ -612,7 +613,7 @@ class Book
         ]);
     }
 
-    private function getClientIpAddress()
+    private function getClientIpAddress(): ?string
     {
         // Check for various headers that might contain the real IP
         $ipHeaders = [
@@ -642,7 +643,7 @@ class Book
         return $_SERVER['REMOTE_ADDR'] ?? null;
     }
 
-    private function getIpGeolocation($ipAddress)
+    private function getIpGeolocation(?string $ipAddress): array
     {
         // Default values
         $defaultGeo = [
@@ -695,7 +696,7 @@ class Book
         }
     }
 
-    public function addBookTags($bookid, $tags)
+    public function addBookTags(string $bookid, array $tags): array
     {
         // First, get the book's internal ID
         $query = "SELECT id FROM book_book WHERE bookid = ? AND location NOT IN ('na', '--')";
@@ -740,7 +741,7 @@ class Book
         ];
     }
 
-    public function getRelatedBooks($bookid, $count = 5, $forceRefresh = false)
+    public function getRelatedBooks(string $bookid, int $count = 5, bool $forceRefresh = false): ?array
     {
         $cacheKey = "related_books_discovery_{$bookid}_{$count}";
 
@@ -776,7 +777,7 @@ class Book
         ];
     }
 
-    private function computeDiscoveryRelatedBooks($bookid, $count)
+    private function computeDiscoveryRelatedBooks(string $bookid, int $count): ?array
     {
         // First, get the source book details
         $sourceBook = $this->fetchBookDataFromDb($bookid);
@@ -841,7 +842,7 @@ class Book
         return $this->applyDiscoveryDistribution($allScoredBooks, $count, $primaryFactors);
     }
 
-    private function calculateDiscoveryScore($sourceBook, $candidateBook)
+    private function calculateDiscoveryScore(array $sourceBook, array $candidateBook): array
     {
         // Get base similarity score
         $baseScore = $this->calculateSimilarityScore($sourceBook, $candidateBook);
@@ -921,7 +922,7 @@ class Book
         ];
     }
 
-    private function findAdjacentGenres($sourceTags)
+    private function findAdjacentGenres(array $sourceTags): array
     {
         // Define genre adjacency map for literary discovery
         $genreMap = [
@@ -946,7 +947,7 @@ class Book
         return array_unique($adjacentGenres);
     }
 
-    private function applyDiscoveryDistribution($allScoredBooks, $count, $primaryFactors)
+    private function applyDiscoveryDistribution(array $allScoredBooks, int $count, array $primaryFactors): array
     {
         // Sort by total score (discovery-enhanced)
         usort($allScoredBooks, function ($a, $b) {
@@ -1016,7 +1017,7 @@ class Book
         ];
     }
 
-    private function calculateDistribution($count)
+    private function calculateDistribution(int $count): array
     {
         // Discovery distribution strategy based on count
         if ($count <= 3) {
@@ -1046,7 +1047,7 @@ class Book
         }
     }
 
-    private function calculateSimilarityScore($sourceBook, $candidateBook)
+    private function calculateSimilarityScore(array $sourceBook, array $candidateBook): array
     {
         $score = 0;
         $reasons = [];
@@ -1131,7 +1132,7 @@ class Book
         ];
     }
 
-    private function calculateTagSimilarity($tags1, $tags2)
+    private function calculateTagSimilarity(array $tags1, array $tags2): float
     {
         if (empty($tags1) || empty($tags2)) {
             return 0;
@@ -1144,7 +1145,7 @@ class Book
         return count($intersection) / count($union);
     }
 
-    private function calculateCategorySimilarity($cat1, $cat2)
+    private function calculateCategorySimilarity(string $cat1, string $cat2): float
     {
         $cat1 = trim($cat1);
         $cat2 = trim($cat2);
@@ -1164,7 +1165,7 @@ class Book
         return 0;
     }
 
-    public function getMostPopularBooks($count = 1, $forceRefresh = false)
+    public function getMostPopularBooks(int $count = 1, bool $forceRefresh = false): array
     {
         $cacheKey = "most_popular_books_{$count}";
 
@@ -1200,7 +1201,7 @@ class Book
         ];
     }
 
-    public function getMostUnpopularBooks($count = 1, $forceRefresh = false)
+    public function getMostUnpopularBooks(int $count = 1, bool $forceRefresh = false): array
     {
         $cacheKey = "most_unpopular_books_{$count}";
 

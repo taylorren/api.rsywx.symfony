@@ -3,17 +3,18 @@
 namespace App\Models;
 
 use App\Database\Connection;
+use PDO;
 
 class BookQueryBuilder
 {
-    private $db;
-    private $baseQuery;
-    private $joins = [];
-    private $fields = [];
-    private $conditions = [];
-    private $orderBy = [];
-    private $limit = null;
-    private $offset = null;
+    private PDO $db;
+    private string $baseQuery;
+    private array $joins = [];
+    private array $fields = [];
+    private array $conditions = [];
+    private array $orderBy = [];
+    private ?int $limit = null;
+    private ?int $offset = null;
     
     public function __construct()
     {
@@ -29,7 +30,7 @@ class BookQueryBuilder
         $this->addField('b.location', 'location');
     }
     
-    public function includeFields(array $fieldGroups)
+    public function includeFields(array $fieldGroups): self
     {
         foreach ($fieldGroups as $group) {
             switch ($group) {
@@ -119,21 +120,21 @@ class BookQueryBuilder
         return $this;
     }
     
-    public function latest($count = 1)
+    public function latest(int $count = 1): self
     {
         $this->addOrderBy('b.id DESC');
         $this->limit($count);
         return $this;
     }
     
-    public function random($count = 1)
+    public function random(int $count = 1): self
     {
         $this->addOrderBy('RAND()');
         $this->limit($count);
         return $this;
     }
     
-    public function lastVisited($count = 1)
+    public function lastVisited(int $count = 1): self
     {
         // Use subquery for most recent visits
         $this->addJoin('INNER JOIN (
@@ -153,7 +154,7 @@ class BookQueryBuilder
         return $this;
     }
     
-    public function forgotten($count = 1)
+    public function forgotten(int $count = 1): self
     {
         // last_visit and total_visits are denormalized onto book_book
         // (b.last_visit / b.total_visits, both bumped by the book_visit INSERT
@@ -167,7 +168,7 @@ class BookQueryBuilder
         return $this;
     }
     
-    public function todaysBooks($month, $date)
+    public function todaysBooks(int $month, int $date): self
     {
         $currentYear = date('Y');
         $monthDay = sprintf('%02d-%02d', $month, $date);
@@ -180,21 +181,21 @@ class BookQueryBuilder
         return $this;
     }
     
-    public function byId($bookId)
+    public function byId(int $bookId): self
     {
         $this->addCondition('b.id = ?', $bookId);
         $this->limit(1);
         return $this;
     }
     
-    public function byBookId($bookId)
+    public function byBookId(string $bookId): self
     {
         $this->addCondition('b.bookid = ?', $bookId);
         $this->limit(1);
         return $this;
     }
     
-    public function mostPopular($count = 1)
+    public function mostPopular(int $count = 1): self
     {
         // Ensure total_visits is exposed for ordering
         $this->includeVisitStats();
@@ -205,7 +206,7 @@ class BookQueryBuilder
         return $this;
     }
     
-    public function leastPopular($count = 1)
+    public function leastPopular(int $count = 1): self
     {
         // Ensure total_visits is exposed for ordering
         $this->includeVisitStats();
@@ -216,44 +217,49 @@ class BookQueryBuilder
         return $this;
     }
     
-    private function addField($field, $alias = null)
+    private function addField(string $field, ?string $alias = null): self
     {
         if ($alias) {
             $this->fields[] = "{$field} as {$alias}";
         } else {
             $this->fields[] = $field;
         }
+        return $this;
     }
     
-    private function addJoin($join)
+    private function addJoin(string $join): self
     {
         if (!in_array($join, $this->joins)) {
             $this->joins[] = $join;
         }
+        return $this;
     }
     
-    private function addCondition($condition, $value = null)
+    private function addCondition(string $condition, mixed $value = null): self
     {
         $this->conditions[] = ['condition' => $condition, 'value' => $value];
+        return $this;
     }
     
-    private function addOrderBy($orderBy)
-    {
-        $this->orderBy[] = $orderBy;
-    }
-    
-    public function orderBy($orderBy)
+    private function addOrderBy(string $orderBy): self
     {
         $this->orderBy[] = $orderBy;
         return $this;
     }
     
-    private function limit($limit)
+    public function orderBy(string $orderBy): self
     {
-        $this->limit = (int)$limit;
+        $this->orderBy[] = $orderBy;
+        return $this;
     }
     
-    public function execute()
+    private function limit(int $limit): self
+    {
+        $this->limit = (int)$limit;
+        return $this;
+    }
+    
+    public function execute(): array
     {
         // Always exclude invalid locations
         $this->addCondition("b.location NOT IN ('na', '--')");
@@ -309,33 +315,33 @@ class BookQueryBuilder
         return $books;
     }
     
-    public function executeOne()
+    public function executeOne(): ?BookResponse
     {
         $this->limit(1);
         $results = $this->execute();
         return !empty($results) ? $results[0] : null;
     }
     
-    public function searchByAuthor($author)
+    public function searchByAuthor(string $author): self
     {
         $this->addCondition("b.author LIKE ?", "%{$author}%");
         return $this;
     }
     
-    public function searchByTitle($title)
+    public function searchByTitle(string $title): self
     {
         $this->addCondition("b.title LIKE ?", "%{$title}%");
         return $this;
     }
     
-    public function searchByTag($tag)
+    public function searchByTag(string $tag): self
     {
         $this->addJoin('INNER JOIN book_taglist t ON b.id = t.bid');
         $this->addCondition("t.tag = ?", $tag);
         return $this;
     }
     
-    public function searchMisc($value)
+    public function searchMisc(string $value): self
     {
         $this->conditions[] = [
             'condition' => "(b.title LIKE ? OR b.author LIKE ?)", 
@@ -344,7 +350,7 @@ class BookQueryBuilder
         return $this;
     }
     
-    public function paginate($page, $perPage)
+    public function paginate(int $page, int $perPage): self
     {
         $offset = ($page - 1) * $perPage;
         $this->limit = $perPage;
@@ -352,7 +358,7 @@ class BookQueryBuilder
         return $this;
     }
     
-    public function count()
+    public function count(): int
     {
         // Build count query without LIMIT
         $query = "SELECT COUNT(DISTINCT b.id) as total ";

@@ -7,7 +7,7 @@ use App\Models\Book;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use OpenApi\Attributes as OA;
-use Exception;
+
 
 #[OA\Info(
     version: "1.0.0",
@@ -27,7 +27,7 @@ use Exception;
 )]
 class BookController
 {
-    private $bookStatusModel;
+    private BookStatus $bookStatusModel;
 
     public function __construct()
     {
@@ -68,7 +68,7 @@ class BookController
             ]
         )
     )]
-    public function status(Request $request, Response $response)
+    public function status(Request $request, Response $response): Response
     {
         try {
             $queryParams = $request->getQueryParams();
@@ -175,7 +175,7 @@ class BookController
             ]
         )
     )]
-    public function show(Request $request, Response $response, $args)
+    public function show(Request $request, Response $response, array $args): Response
     {
         try {
             $bookid = $args['bookid'];
@@ -267,7 +267,7 @@ class BookController
             ]
         )
     )]
-    public function latest(Request $request, Response $response, $args)
+    public function latest(Request $request, Response $response, array $args): Response
     {
         try {
             $count = isset($args['count']) ? (int)$args['count'] : 1;
@@ -276,7 +276,7 @@ class BookController
             $queryParams = $request->getQueryParams();
             $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new \App\Models\Book();
+            $bookModel = new Book();
             $result = $bookModel->getLatestBooks($count, $forceRefresh);
 
             $data = [
@@ -351,7 +351,7 @@ class BookController
             ]
         )
     )]
-    public function random(Request $request, Response $response, $args)
+    public function random(Request $request, Response $response, array $args): Response
     {
         try {
             $count = isset($args['count']) ? (int)$args['count'] : 1;
@@ -360,7 +360,7 @@ class BookController
             $queryParams = $request->getQueryParams();
             $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new \App\Models\Book();
+            $bookModel = new Book();
             $result = $bookModel->getRandomBooks($count, $forceRefresh);
 
             $data = [
@@ -434,7 +434,7 @@ class BookController
             ]
         )
     )]
-    public function lastVisited(Request $request, Response $response, $args)
+    public function lastVisited(Request $request, Response $response, array $args): Response
     {
         try {
             $count = isset($args['count']) ? (int)$args['count'] : 1;
@@ -443,7 +443,7 @@ class BookController
             $queryParams = $request->getQueryParams();
             $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new \App\Models\Book();
+            $bookModel = new Book();
             $result = $bookModel->getLastVisitedBooks($count, $forceRefresh);
 
             $data = [
@@ -516,7 +516,7 @@ class BookController
             ]
         )
     )]
-    public function forgotten(Request $request, Response $response, $args)
+    public function forgotten(Request $request, Response $response, array $args): Response
     {
         try {
             $count = isset($args['count']) ? (int)$args['count'] : 1;
@@ -525,7 +525,7 @@ class BookController
             $queryParams = $request->getQueryParams();
             $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new \App\Models\Book();
+            $bookModel = new Book();
             $result = $bookModel->getForgottenBooks($count, $forceRefresh);
 
             $data = [
@@ -627,7 +627,7 @@ class BookController
             ]
         )
     )]
-    public function todayWithParams(Request $request, Response $response, $args)
+    public function todayWithParams(Request $request, Response $response, array $args): Response
     {
         try {
             $queryParams = $request->getQueryParams();
@@ -658,7 +658,7 @@ class BookController
                 return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
             }
 
-            $bookModel = new \App\Models\Book();
+            $bookModel = new Book();
             $result = $bookModel->getTodaysBooks($month, $date, $forceRefresh);
 
             $data = [
@@ -737,7 +737,7 @@ class BookController
             ]
         )
     )]
-    public function today(Request $request, Response $response)
+    public function today(Request $request, Response $response): Response
     {
         try {
             $queryParams = $request->getQueryParams();
@@ -747,7 +747,7 @@ class BookController
             $month = (int)date('n');
             $date = (int)date('j');
 
-            $bookModel = new \App\Models\Book();
+            $bookModel = new Book();
             $result = $bookModel->getTodaysBooks($month, $date, $forceRefresh);
 
             $data = [
@@ -823,7 +823,7 @@ class BookController
             ]
         )
     )]
-    public function visitHistory(Request $request, Response $response)
+    public function visitHistory(Request $request, Response $response): Response
     {
         try {
             $queryParams = $request->getQueryParams();
@@ -833,7 +833,7 @@ class BookController
             $days = isset($queryParams['days']) ? (int)$queryParams['days'] : 30;
             $days = max(1, min(365, $days)); // Ensure days is between 1 and 365
 
-            $bookModel = new \App\Models\Book();
+            $bookModel = new Book();
             $result = $bookModel->getVisitHistory($days, $forceRefresh);
 
             $data = [
@@ -923,7 +923,7 @@ class BookController
             ]
         )
     )]
-    public function listBooks(Request $request, Response $response, $args)
+    public function listBooks(Request $request, Response $response, array $args): Response
     {
         try {
             // Handle the case where a single numeric parameter is provided (as page number)
@@ -1020,7 +1020,7 @@ class BookController
             ]
         )
     )]
-    public function addTags(Request $request, Response $response, $args)
+    public function addTags(Request $request, Response $response, array $args): Response
     {
         try {
             $bookid = $args['bookid'];
@@ -1128,7 +1128,7 @@ class BookController
             ]
         )
     )]
-    public function getRelatedBooks(Request $request, Response $response, $args)
+    public function getRelatedBooks(Request $request, Response $response, array $args): Response
     {
         try {
             $startTime = microtime(true);
@@ -1242,7 +1242,7 @@ class BookController
             )
         ]
     )]
-    public function popular(Request $request, Response $response, $args)
+    public function popular(Request $request, Response $response, array $args): Response
     {
         try {
             $count = isset($args['count']) ? (int)$args['count'] : 10;
@@ -1346,7 +1346,7 @@ class BookController
             )
         ]
     )]
-    public function unpopular(Request $request, Response $response, $args)
+    public function unpopular(Request $request, Response $response, array $args): Response
     {
         try {
             $count = isset($args['count']) ? (int)$args['count'] : 10;
@@ -1377,7 +1377,7 @@ class BookController
             $response->getBody()->write(json_encode($data));
             return $response->withHeader('Content-Type', 'application/json');
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $errorData = [
                 'success' => false,
                 'message' => 'Internal server error: ' . $e->getMessage()

@@ -3,18 +3,19 @@
 namespace App\Models;
 
 use App\Database\Connection;
+use PDO;
 use App\Cache\MemoryCache;
 
 class WordOfTheDay
 {
-    private $db;
+    private PDO $db;
 
     public function __construct()
     {
         $this->db = Connection::getInstance()->getConnection();
     }
 
-    public function getWordOfTheDay()
+    public function getWordOfTheDay(): array
     {
         // Always fetch a fresh random word - no caching needed for random data
         $wordData = $this->fetchWordOfTheDayFromDb();
@@ -25,7 +26,7 @@ class WordOfTheDay
         ];
     }
 
-    private function fetchWordOfTheDayFromDb()
+    private function fetchWordOfTheDayFromDb(): array
     {
         // Get a truly random word from the wotd table
         $query = "SELECT id, word, meaning, sentence, type FROM wotd ORDER BY RAND() LIMIT 1";

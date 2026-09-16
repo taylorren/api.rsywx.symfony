@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Database\Connection;
+use PDO;
 use App\Cache\MemoryCache;
 
 class Reading
 {
-    private $db;
-    private $cache;
+    private PDO $db;
+    private MemoryCache $cache;
 
     public function __construct()
     {
@@ -16,7 +17,7 @@ class Reading
         $this->cache = new MemoryCache();
     }
 
-    public function getReadingSummary($forceRefresh = false)
+    public function getReadingSummary(bool $forceRefresh = false): array
     {
         $cacheKey = "reading_summary";
 
@@ -45,7 +46,7 @@ class Reading
         ];
     }
 
-    private function fetchReadingSummaryFromDb()
+    private function fetchReadingSummaryFromDb(): array
     {
         // Get books read count (headlines with display = 1)
         $booksReadQuery = "SELECT COUNT(bid) as books_read FROM book_headline WHERE display = 1";
@@ -95,7 +96,7 @@ class Reading
         ];
     }
 
-    public function getLatestReadings($count = 1, $forceRefresh = false)
+    public function getLatestReadings(int $count = 1, bool $forceRefresh = false): array
     {
         $cacheKey = "latest_readings_{$count}";
 
@@ -124,7 +125,7 @@ class Reading
         ];
     }
 
-    private function fetchLatestReadingsFromDb($count)
+    private function fetchLatestReadingsFromDb(int $count): array
     {
         $query = "
             SELECT r.title, r.datein, r.uri, r.feature,
@@ -149,13 +150,13 @@ class Reading
         return $readings;
     }
 
-    public function clearReadingSummaryCache()
+    public function clearReadingSummaryCache(): bool
     {
         $cacheKey = "reading_summary";
         return $this->cache->delete($cacheKey);
     }
 
-    public function clearLatestReadingsCache($count = null)
+    public function clearLatestReadingsCache(?int $count = null): bool
     {
         if ($count !== null) {
             $cacheKey = "latest_readings_{$count}";
@@ -166,7 +167,7 @@ class Reading
         return $this->cache->clear();
     }
 
-    public function getReviewsPaginated($page = 1, $perPage = 9, $forceRefresh = false)
+    public function getReviewsPaginated(int $page = 1, int $perPage = 9, bool $forceRefresh = false): array
     {
         $cacheKey = "reviews_paginated_{$page}_{$perPage}";
 
@@ -196,7 +197,7 @@ class Reading
         ];
     }
 
-    private function fetchReviewsPaginatedFromDb($page, $perPage)
+    private function fetchReviewsPaginatedFromDb(int $page, int $perPage): array
     {
         // First, get total count for pagination
         $countQuery = "
@@ -246,7 +247,7 @@ class Reading
         ];
     }
 
-    public function clearReviewsPaginatedCache($page = null, $perPage = null)
+    public function clearReviewsPaginatedCache(?int $page = null, ?int $perPage = null): bool
     {
         if ($page !== null && $perPage !== null) {
             $cacheKey = "reviews_paginated_{$page}_{$perPage}";

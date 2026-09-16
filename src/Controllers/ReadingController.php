@@ -5,6 +5,7 @@ namespace App\Controllers;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use OpenApi\Attributes as OA;
+use App\Models\Reading;
 
 class ReadingController
 {
@@ -49,13 +50,13 @@ class ReadingController
             ]
         )
     )]
-    public function summary(Request $request, Response $response)
+    public function summary(Request $request, Response $response): Response
     {
         try {
             $queryParams = $request->getQueryParams();
             $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
             
-            $readingModel = new \App\Models\Reading();
+            $readingModel = new Reading();
             $result = $readingModel->getReadingSummary($forceRefresh);
             
             $data = [
@@ -124,7 +125,7 @@ class ReadingController
             ]
         )
     )]
-    public function latest(Request $request, Response $response, $args)
+    public function latest(Request $request, Response $response, array $args): Response
     {
         try {
             $count = isset($args['count']) ? (int)$args['count'] : 1;
@@ -133,7 +134,7 @@ class ReadingController
             $queryParams = $request->getQueryParams();
             $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
             
-            $readingModel = new \App\Models\Reading();
+            $readingModel = new Reading();
             $result = $readingModel->getLatestReadings($count, $forceRefresh);
             
             $data = [
@@ -212,7 +213,7 @@ class ReadingController
             ]
         )
     )]
-    public function reviews(Request $request, Response $response, $args)
+    public function reviews(Request $request, Response $response, array $args): Response
     {
         try {
             $page = isset($args['page']) ? max(1, (int)$args['page']) : 1;
@@ -221,7 +222,7 @@ class ReadingController
             $queryParams = $request->getQueryParams();
             $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
             
-            $readingModel = new \App\Models\Reading();
+            $readingModel = new Reading();
             $result = $readingModel->getReviewsPaginated($page, $perPage, $forceRefresh);
             
             $data = [

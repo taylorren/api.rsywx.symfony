@@ -5,6 +5,9 @@ namespace App\Controllers;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use OpenApi\Attributes as OA;
+use App\Models\WordOfTheDay;
+use App\Models\QuoteOfTheDay;
+use App\Models\Weather;
 
 class MiscController
 {
@@ -36,10 +39,10 @@ class MiscController
             ]
         )
     )]
-    public function wordOfTheDay(Request $request, Response $response)
+    public function wordOfTheDay(Request $request, Response $response): Response
     {
         try {
-            $wordModel = new \App\Models\WordOfTheDay();
+            $wordModel = new WordOfTheDay();
             $result = $wordModel->getWordOfTheDay();
             
             $data = [
@@ -87,10 +90,10 @@ class MiscController
             ]
         )
     )]
-    public function qotd(Request $request, Response $response)
+    public function qotd(Request $request, Response $response): Response
     {
         try {
-            $quoteModel = new \App\Models\QuoteOfTheDay();
+            $quoteModel = new QuoteOfTheDay();
             $result = $quoteModel->getQuoteOfTheDay();
             
             $data = [
@@ -157,14 +160,14 @@ class MiscController
             ]
         )
     )]
-    public function currentWeather(Request $request, Response $response)
+    public function currentWeather(Request $request, Response $response): Response
     {
         try {
             $queryParams = $request->getQueryParams();
             $location = $queryParams['location'] ?? '101190401'; // Suzhou, Jiangsu
             $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
             
-            $weatherModel = new \App\Models\Weather();
+            $weatherModel = new Weather();
             $result = $weatherModel->getCurrentWeather($location, $forceRefresh);
             
             $data = [
@@ -245,7 +248,7 @@ class MiscController
             ]
         )
     )]
-    public function weatherForecast(Request $request, Response $response)
+    public function weatherForecast(Request $request, Response $response): Response
     {
         try {
             $queryParams = $request->getQueryParams();
@@ -253,7 +256,7 @@ class MiscController
             $days = isset($queryParams['days']) ? max(1, min(7, (int)$queryParams['days'])) : 3;
             $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
             
-            $weatherModel = new \App\Models\Weather();
+            $weatherModel = new Weather();
             $result = $weatherModel->getWeatherForecast($location, $days, $forceRefresh);
             
             $data = [

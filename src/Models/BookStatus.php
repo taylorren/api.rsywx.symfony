@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Database\Connection;
 use App\Cache\MemoryCache;
+use PDO;
 
 class BookStatus
 {
-    protected $db;
-    protected $cache;
-    protected $cacheKey = 'book_collection_status';
-    protected $cacheTtl = 86400; // 24 hours
+    protected PDO $db;
+    protected MemoryCache $cache;
+    protected string $cacheKey = 'book_collection_status';
+    protected int $cacheTtl = 86400; // 24 hours
 
     public function __construct()
     {
@@ -18,7 +19,7 @@ class BookStatus
         $this->cache = new MemoryCache();
     }
 
-    public function getCollectionStatus($forceRefresh = false)
+    public function getCollectionStatus(bool $forceRefresh = false): array
     {
         // Try to get from cache first
         if (!$forceRefresh) {
@@ -43,12 +44,12 @@ class BookStatus
         ];
     }
 
-    public function clearCache()
+    public function clearCache(): bool
     {
         return $this->cache->delete($this->cacheKey);
     }
 
-    private function fetchCollectionStatusFromDb()
+    private function fetchCollectionStatusFromDb(): array
     {
         // Single aggregate pass over book_book (the table is small and fully
         // indexed via idx_book_book_nl on location). Previously this issued four

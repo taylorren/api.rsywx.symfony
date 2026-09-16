@@ -3,17 +3,18 @@
 namespace App\Models;
 
 use App\Database\Connection;
+use PDO;
 
 class QuoteOfTheDay
 {
-    private $db;
+    private PDO $db;
 
     public function __construct()
     {
         $this->db = Connection::getInstance()->getConnection();
     }
 
-    public function getQuoteOfTheDay()
+    public function getQuoteOfTheDay(): array
     {
         // Always fetch a fresh random quote - no caching needed for random data
         $quoteData = $this->fetchQuoteOfTheDayFromDb();
@@ -24,7 +25,7 @@ class QuoteOfTheDay
         ];
     }
 
-    private function fetchQuoteOfTheDayFromDb()
+    private function fetchQuoteOfTheDayFromDb(): array
     {
         // Get a truly random quote from the qotd table
         $query = "SELECT id, quote, source FROM qotd ORDER BY RAND() LIMIT 1";

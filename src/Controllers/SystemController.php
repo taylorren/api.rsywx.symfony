@@ -27,7 +27,7 @@ class SystemController
             )
         ]
     )]
-    public function health(Request $request, Response $response)
+    public function health(Request $request, Response $response): Response
     {
         $response->getBody()->write(json_encode([
             'success' => true,

@@ -5,51 +5,51 @@ namespace App\Models;
 class BookResponse
 {
     // Core fields (always present)
-    public $id;
-    public $bookid;
-    public $title;
-    public $author;
-    public $cover_uri;
-    public $translated;
-    public $copyrighter;
-    public $region;
-    public $location;
+    public mixed $id = null;
+    public mixed $bookid = null;
+    public mixed $title = null;
+    public mixed $author = null;
+    public mixed $cover_uri = null;
+    public mixed $translated = null;
+    public mixed $copyrighter = null;
+    public mixed $region = null;
+    public mixed $location = null;
 
     // Purchase information (optional)
-    public $purchdate = null;
-    public $price = null;
-    public $place_name = null;
-    public $publisher_name = null;
+    public mixed $purchdate = null;
+    public mixed $price = null;
+    public mixed $place_name = null;
+    public mixed $publisher_name = null;
 
     // Publication information (optional)
-    public $pubdate = null;
-    public $printdate = null;
-    public $ver = null;
-    public $deco = null;
-    public $isbn = null;
-    public $category = null;
-    public $ol = null;
+    public mixed $pubdate = null;
+    public mixed $printdate = null;
+    public mixed $ver = null;
+    public mixed $deco = null;
+    public mixed $isbn = null;
+    public mixed $category = null;
+    public mixed $ol = null;
 
     // Book details (optional)
-    public $kword = null;
-    public $page = null;
-    public $intro = null;
-    public $instock = null;
+    public mixed $kword = null;
+    public mixed $page = null;
+    public mixed $intro = null;
+    public mixed $instock = null;
 
     // Visit information (optional)
-    public $total_visits = null;
-    public $last_visited = null;
-    public $visit_country = null;
+    public mixed $total_visits = null;
+    public mixed $last_visited = null;
+    public mixed $visit_country = null;
 
     // Computed fields (optional)
-    public $days_since_visit = null;
-    public $years_ago = null;
+    public mixed $days_since_visit = null;
+    public mixed $years_ago = null;
 
     // Rich content (optional)
-    public $tags = null;
-    public $reviews = null;
+    public mixed $tags = null;
+    public mixed $reviews = null;
 
-    private $setFields = [];
+    private array $setFields = [];
 
     public function __construct(array $data = [])
     {
@@ -78,7 +78,7 @@ class BookResponse
     /**
      * Convert to array, excluding null values for cleaner JSON
      */
-    public function toArray($includeNulls = false)
+    public function toArray(bool $includeNulls = false): array
     {
         $result = [];
         $reflection = new \ReflectionClass($this);
@@ -109,7 +109,7 @@ class BookResponse
     /**
      * Create from database row with field mapping
      */
-    public static function fromDatabaseRow(array $row, array $fieldMappings = [])
+    public static function fromDatabaseRow(array $row, array $fieldMappings = []): self
     {
         $data = [];
 
