@@ -3,20 +3,20 @@
 namespace App\Models;
 
 use App\Database\Connection;
-use App\Cache\MemoryCache;
+use App\Cache\ApcuCache;
 use PDO;
 
 class BookStatus
 {
     protected PDO $db;
-    protected MemoryCache $cache;
+    protected ApcuCache $cache;
     protected string $cacheKey = 'book_collection_status';
     protected int $cacheTtl = 86400; // 24 hours
 
     public function __construct()
     {
         $this->db = Connection::getInstance()->getConnection();
-        $this->cache = new MemoryCache();
+        $this->cache = new ApcuCache();
     }
 
     public function getCollectionStatus(bool $forceRefresh = false): array

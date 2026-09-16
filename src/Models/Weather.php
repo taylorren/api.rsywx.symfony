@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
-use App\Cache\MemoryCache;
+use App\Cache\ApcuCache;
 
 class Weather
 {
-    private MemoryCache $cache;
+    private ApcuCache $cache;
     private ?string $apiKey;
     private string $baseUrl = 'https://ne5rk4nwr6.re.qweatherapi.com/v7';
 
     public function __construct()
     {
-        $this->cache = new MemoryCache();
+        $this->cache = new ApcuCache();
         $this->apiKey = $_ENV['QWEATHER_API_KEY'] ?? null;
 
         if (!$this->apiKey) {

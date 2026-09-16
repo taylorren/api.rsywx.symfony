@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Database\Connection;
 use PDO;
-use App\Cache\MemoryCache;
+use App\Cache\ApcuCache;
 
 class WordOfTheDay
 {

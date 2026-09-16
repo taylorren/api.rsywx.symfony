@@ -3,19 +3,19 @@
 namespace App\Models;
 
 use App\Database\Connection;
-use App\Cache\MemoryCache;
+use App\Cache\ApcuCache;
 use PDO;
 
 class Book
 {
     private PDO $db;
-    private MemoryCache $cache;
+    private ApcuCache $cache;
     private int $cacheTtl = 86400; // 24 hours
 
     public function __construct()
     {
         $this->db = Connection::getInstance()->getConnection();
-        $this->cache = new MemoryCache();
+        $this->cache = new ApcuCache();
     }
 
     public function getBookDetail(string $bookid, bool $forceRefresh = false): ?array

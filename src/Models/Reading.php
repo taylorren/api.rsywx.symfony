@@ -4,17 +4,17 @@ namespace App\Models;
 
 use App\Database\Connection;
 use PDO;
-use App\Cache\MemoryCache;
+use App\Cache\ApcuCache;
 
 class Reading
 {
     private PDO $db;
-    private MemoryCache $cache;
+    private ApcuCache $cache;
 
     public function __construct()
     {
         $this->db = Connection::getInstance()->getConnection();
-        $this->cache = new MemoryCache();
+        $this->cache = new ApcuCache();
     }
 
     public function getReadingSummary(bool $forceRefresh = false): array

@@ -4,67 +4,19 @@ namespace Tests\Unit;
 
 use Tests\BaseTestCase;
 use App\Models\BookStatus;
-use App\Cache\MemoryCache;
+use App\Cache\ApcuCache;
 use App\Database\Connection;
-
-// Testable version of BookStatus that uses custom cache directory
-class BookStatusTestable extends BookStatus
-{
-    public function __construct($cacheDir = null)
-    {
-        // Call parent constructor first
-        parent::__construct();
-        
-        // Use memory cache for testing
-        $this->cache = new MemoryCache();
-    }
-}
 
 class BookStatusTest extends BaseTestCase
 {
-    private $bookStatus;
-    private $testCacheDir;
+    private BookStatus $bookStatus;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
-        $this->testCacheDir = sys_get_temp_dir() . '/rsywx_test_cache';
-        
-        // Clean up any existing test cache
-        $this->cleanupCache();
-        
-        // Ensure cache directory exists
-        $this->ensureCacheDir();
-        
-        // Create BookStatus with test cache
-        $this->bookStatus = new BookStatusTestable($this->testCacheDir);
-    }
 
-    protected function tearDown(): void
-    {
-        $this->cleanupCache();
-        parent::tearDown();
-    }
-
-    private function cleanupCache()
-    {
-        if (is_dir($this->testCacheDir)) {
-            $files = glob($this->testCacheDir . '/*');
-            foreach ($files as $file) {
-                if (is_file($file)) {
-                    unlink($file);
-                }
-            }
-            rmdir($this->testCacheDir);
-        }
-    }
-
-    private function ensureCacheDir()
-    {
-        if (!is_dir($this->testCacheDir)) {
-            mkdir($this->testCacheDir, 0755, true);
-        }
+        // Fresh cache instance per test (parent constructor wires an ApcuCache)
+        $this->bookStatus = new BookStatus();
     }
 
     public function testGetCollectionStatusStructure()
