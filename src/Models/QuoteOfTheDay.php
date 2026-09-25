@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Database\Connection;
 use PDO;
+use App\Exceptions\NotFoundException;
 
 class QuoteOfTheDay
 {
@@ -33,6 +34,10 @@ class QuoteOfTheDay
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         $quote = $stmt->fetch();
+
+        if ($quote === false) {
+            throw new NotFoundException('No quote available');
+        }
 
         return [
             'id' => (int)$quote['id'],

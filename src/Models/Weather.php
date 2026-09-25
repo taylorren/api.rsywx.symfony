@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Cache\ApcuCache;
+use App\Exceptions\ApiException;
+use App\Exceptions\UpstreamException;
+use App\Exceptions\ValidationException;
 
 class Weather
 {
@@ -16,7 +19,7 @@ class Weather
         $this->apiKey = $_ENV['QWEATHER_API_KEY'] ?? null;
 
         if (!$this->apiKey) {
-            throw new \Exception('QWeather API key not configured');
+            throw new ApiException('Weather service is not configured', 500, 'QWEATHER_API_KEY missing from environment');
         }
     }
 
@@ -90,8 +93,7 @@ class Weather
 
         if (!isset($response['code']) || $response['code'] !== '200') {
             $errorMsg = isset($response['code']) ? $response['code'] : 'No response code';
-            $fullResponse = json_encode($response);
-            throw new \Exception("QWeather Current API error: {$errorMsg}. Response: {$fullResponse}");
+            throw new UpstreamException('Weather service returned an error response', "QWeather current API error code: {$errorMsg}. Response: " . json_encode($response));
         }
 
         $weather = $response['now'];
@@ -115,7 +117,19 @@ class Weather
 
     private function fetchWeatherForecastFromApi(string $location, int $days): array
     {
-        $url = "{$this->baseUrl}/weather/{$days}d";
+        // QWeather v7 only supports 3d/7d/10d/15d/30d endpoints.
+        // Snap the requested day count to the nearest supported value.
+        $supported = [3, 7, 10, 15, 30];
+        $endpointDays = $supported[0];
+        foreach ($supported as $s) {
+            if ($days <= $s) {
+                $endpointDays = $s;
+                break;
+            }
+            $endpointDays = $s;
+        }
+
+        $url = "{$this->baseUrl}/weather/{$endpointDays}d";
         $params = [
             'location' => $location,
             'key' => $this->apiKey
@@ -125,8 +139,7 @@ class Weather
 
         if (!isset($response['code']) || $response['code'] !== '200') {
             $errorMsg = isset($response['code']) ? $response['code'] : 'No response code';
-            $fullResponse = json_encode($response);
-            throw new \Exception("QWeather Forecast API error: {$errorMsg}. Response: {$fullResponse}");
+            throw new UpstreamException('Weather service returned an error response', "QWeather forecast API error code: {$errorMsg}. Response: " . json_encode($response));
         }
 
         $forecast = [];
@@ -178,16 +191,24 @@ class Weather
         curl_close($ch);
 
         if ($response === false || !empty($error)) {
-            throw new \Exception("Failed to fetch weather data from QWeather API. URL: {$fullUrl}. cURL Error: {$error}");
+            throw new UpstreamException('Weather service is unreachable', "URL: {$fullUrl}. cURL error: {$error}");
         }
 
         if ($httpCode !== 200) {
-            throw new \Exception("QWeather API returned HTTP {$httpCode}. URL: {$fullUrl}. Response: {$response}");
+            // 4xx from QWeather means the client sent an invalid parameter
+            // (e.g. a city name instead of a LocationID or coordinates).
+            if ($httpCode >= 400 && $httpCode < 500) {
+                if ($httpCode === 401 || $httpCode === 403) {
+                    throw new ApiException('Weather service is misconfigured', 500, "QWeather returned HTTP {$httpCode} (auth failure). URL: {$fullUrl}. Response: {$response}");
+                }
+                throw new ValidationException('Invalid weather request parameters', "QWeather returned HTTP {$httpCode}. URL: {$fullUrl}. Response: {$response}");
+            }
+            throw new UpstreamException('Weather service error', "QWeather returned HTTP {$httpCode}. URL: {$fullUrl}. Response: {$response}");
         }
 
         $decoded = json_decode($response, true);
         if ($decoded === null) {
-            throw new \Exception("Invalid JSON response from QWeather API. Raw response: {$response}");
+            throw new UpstreamException('Invalid response from weather service', "Unparseable JSON from QWeather. Raw response: {$response}");
         }
 
         return $decoded;

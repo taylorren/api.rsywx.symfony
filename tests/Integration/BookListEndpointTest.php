@@ -139,7 +139,9 @@ class BookListEndpointTest extends BaseTestCase
         ]);
         $response = $this->runApp($request);
 
-        $this->assertEquals(500, $response->getStatusCode());
+        // Since the error-handling refactor, invalid list types are client
+        // errors (400 Bad Request) instead of a blanket 500.
+        $this->assertEquals(400, $response->getStatusCode());
         $data = json_decode((string)$response->getBody(), true);
 
         $this->assertFalse($data['success']);
@@ -156,7 +158,7 @@ class BookListEndpointTest extends BaseTestCase
         ]);
         $response = $this->runApp($request);
 
-        $this->assertEquals(500, $response->getStatusCode());
+        $this->assertEquals(400, $response->getStatusCode());
         $data = json_decode((string)$response->getBody(), true);
 
         $this->assertFalse($data['success']);

@@ -52,30 +52,20 @@ class ReadingController
     )]
     public function summary(Request $request, Response $response): Response
     {
-        try {
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
-            
-            $readingModel = new Reading();
-            $result = $readingModel->getReadingSummary($forceRefresh);
-            
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
-            
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        
+        $readingModel = new Reading();
+        $result = $readingModel->getReadingSummary($forceRefresh);
+        
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
+        
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -127,33 +117,23 @@ class ReadingController
     )]
     public function latest(Request $request, Response $response, array $args): Response
     {
-        try {
-            $count = isset($args['count']) ? (int)$args['count'] : 1;
-            $count = max(1, min(50, $count)); // Ensure count is between 1 and 50
-            
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
-            
-            $readingModel = new Reading();
-            $result = $readingModel->getLatestReadings($count, $forceRefresh);
-            
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
-            
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $count = isset($args['count']) ? (int)$args['count'] : 1;
+        $count = max(1, min(50, $count)); // Ensure count is between 1 and 50
+        
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        
+        $readingModel = new Reading();
+        $result = $readingModel->getLatestReadings($count, $forceRefresh);
+        
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
+        
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -215,33 +195,23 @@ class ReadingController
     )]
     public function reviews(Request $request, Response $response, array $args): Response
     {
-        try {
-            $page = isset($args['page']) ? max(1, (int)$args['page']) : 1;
-            $perPage = 9; // Fixed per page count - can be changed in code if needed
-            
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
-            
-            $readingModel = new Reading();
-            $result = $readingModel->getReviewsPaginated($page, $perPage, $forceRefresh);
-            
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'pagination' => $result['pagination'],
-                'cached' => $result['from_cache']
-            ];
-            
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $page = isset($args['page']) ? max(1, (int)$args['page']) : 1;
+        $perPage = 9; // Fixed per page count - can be changed in code if needed
+        
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        
+        $readingModel = new Reading();
+        $result = $readingModel->getReviewsPaginated($page, $perPage, $forceRefresh);
+        
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'pagination' => $result['pagination'],
+            'cached' => $result['from_cache']
+        ];
+        
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 }

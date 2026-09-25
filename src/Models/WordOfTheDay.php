@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Database\Connection;
 use PDO;
 use App\Cache\ApcuCache;
+use App\Exceptions\NotFoundException;
 
 class WordOfTheDay
 {
@@ -34,6 +35,10 @@ class WordOfTheDay
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         $word = $stmt->fetch();
+
+        if ($word === false) {
+            throw new NotFoundException('No word available');
+        }
 
         return [
             'id' => (int)$word['id'],

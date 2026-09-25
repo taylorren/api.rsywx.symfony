@@ -45,6 +45,10 @@ AppFactory::setContainer($container);
 // Create App
 $app = AppFactory::create();
 
+// JSON error-handling middleware — registered FIRST so it runs LAST (closest
+// to the routes); mirrors public/index.php. See ErrorHandlerMiddleware.
+$app->add(new \App\Middleware\ErrorHandlerMiddleware());
+
 // Add error middleware
 $app->addErrorMiddleware(
     ($_ENV['APP_ENV'] ?? 'production') === 'development',

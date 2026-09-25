@@ -4,6 +4,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use DI\Container;
+use App\Middleware\ErrorHandlerMiddleware;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -18,15 +19,21 @@ AppFactory::setContainer($container);
 // Create App
 $app = AppFactory::create();
 
+// JSON error-handling middleware — registered FIRST so it runs LAST (closest
+// to the routes). It converts exceptions from controllers/models into
+// {success, message[, detail]} responses with proper status codes, and its
+// responses still pass back through the CORS/timing middleware on the way out.
+$app->add(new ErrorHandlerMiddleware());
+
 // Add error middleware
 $errorMiddleware = $app->addErrorMiddleware(
-    $_ENV['APP_ENV'] === 'development',
+    ($_ENV['APP_ENV'] ?? 'production') === 'development',
     true,
     true
 );
 
 // Add performance timing middleware (development only)
-if ($_ENV['APP_ENV'] === 'development') {
+if (($_ENV['APP_ENV'] ?? 'production') === 'development') {
     $app->add(function (Request $request, $handler) {
         $start = microtime(true);
         $response = $handler->handle($request);

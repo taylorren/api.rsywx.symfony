@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Database\Connection;
+use App\Exceptions\NotFoundException;
 use App\Cache\ApcuCache;
 use PDO;
 
@@ -705,7 +706,7 @@ class Book
         $book = $stmt->fetch();
 
         if (!$book) {
-            throw new \InvalidArgumentException('Book not found');
+            throw new NotFoundException('Book not found');
         }
 
         $bookId = $book['id'];

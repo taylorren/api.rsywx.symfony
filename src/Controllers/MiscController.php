@@ -41,27 +41,17 @@ class MiscController
     )]
     public function wordOfTheDay(Request $request, Response $response): Response
     {
-        try {
-            $wordModel = new WordOfTheDay();
-            $result = $wordModel->getWordOfTheDay();
-            
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
-            
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $wordModel = new WordOfTheDay();
+        $result = $wordModel->getWordOfTheDay();
+        
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
+        
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -92,27 +82,17 @@ class MiscController
     )]
     public function qotd(Request $request, Response $response): Response
     {
-        try {
-            $quoteModel = new QuoteOfTheDay();
-            $result = $quoteModel->getQuoteOfTheDay();
-            
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
-            
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $quoteModel = new QuoteOfTheDay();
+        $result = $quoteModel->getQuoteOfTheDay();
+        
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
+        
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -162,31 +142,21 @@ class MiscController
     )]
     public function currentWeather(Request $request, Response $response): Response
     {
-        try {
-            $queryParams = $request->getQueryParams();
-            $location = $queryParams['location'] ?? '101190401'; // Suzhou, Jiangsu
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
-            
-            $weatherModel = new Weather();
-            $result = $weatherModel->getCurrentWeather($location, $forceRefresh);
-            
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
-            
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $queryParams = $request->getQueryParams();
+        $location = $queryParams['location'] ?? '101190401'; // Suzhou, Jiangsu
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        
+        $weatherModel = new Weather();
+        $result = $weatherModel->getCurrentWeather($location, $forceRefresh);
+        
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
+        
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -250,31 +220,21 @@ class MiscController
     )]
     public function weatherForecast(Request $request, Response $response): Response
     {
-        try {
-            $queryParams = $request->getQueryParams();
-            $location = $queryParams['location'] ?? '101190401'; // Suzhou, Jiangsu
-            $days = isset($queryParams['days']) ? max(1, min(7, (int)$queryParams['days'])) : 3;
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
-            
-            $weatherModel = new Weather();
-            $result = $weatherModel->getWeatherForecast($location, $days, $forceRefresh);
-            
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
-            
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $queryParams = $request->getQueryParams();
+        $location = $queryParams['location'] ?? '101190401'; // Suzhou, Jiangsu
+        $days = isset($queryParams['days']) ? max(1, min(7, (int)$queryParams['days'])) : 3;
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        
+        $weatherModel = new Weather();
+        $result = $weatherModel->getWeatherForecast($location, $days, $forceRefresh);
+        
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
+        
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 }

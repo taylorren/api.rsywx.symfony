@@ -7,6 +7,8 @@ use App\Models\Book;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use OpenApi\Attributes as OA;
+use App\Exceptions\NotFoundException;
+use App\Exceptions\ValidationException;
 
 
 #[OA\Info(
@@ -70,34 +72,24 @@ class BookController
     )]
     public function status(Request $request, Response $response): Response
     {
-        try {
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $result = $this->bookStatusModel->getCollectionStatus($forceRefresh);
+        $result = $this->bookStatusModel->getCollectionStatus($forceRefresh);
 
-            $data = [
-                'success' => true,
-                'data' => [
-                    'total_books' => (int)$result['data']['total_books'],
-                    'total_pages' => (int)$result['data']['total_pages'],
-                    'total_kwords' => (int)$result['data']['total_kwords'],
-                    'total_visits' => (int)$result['data']['total_visits']
-                ],
-                'cached' => $result['from_cache']
-            ];
+        $data = [
+            'success' => true,
+            'data' => [
+                'total_books' => (int)$result['data']['total_books'],
+                'total_pages' => (int)$result['data']['total_pages'],
+                'total_kwords' => (int)$result['data']['total_kwords'],
+                'total_visits' => (int)$result['data']['total_visits']
+            ],
+            'cached' => $result['from_cache']
+        ];
 
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -177,41 +169,25 @@ class BookController
     )]
     public function show(Request $request, Response $response, array $args): Response
     {
-        try {
-            $bookid = $args['bookid'];
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $bookid = $args['bookid'];
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new Book();
-            $result = $bookModel->getBookDetail($bookid, $forceRefresh);
+        $bookModel = new Book();
+        $result = $bookModel->getBookDetail($bookid, $forceRefresh);
 
-            if ($result === null) {
-                $errorData = [
-                    'success' => false,
-                    'message' => 'Book not found'
-                ];
-
-                $response->getBody()->write(json_encode($errorData));
-                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
-            }
-
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
-
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        if ($result === null) {
+            throw new NotFoundException('Book not found');
         }
+
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
+
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -269,33 +245,23 @@ class BookController
     )]
     public function latest(Request $request, Response $response, array $args): Response
     {
-        try {
-            $count = isset($args['count']) ? (int)$args['count'] : 1;
-            $count = max(1, min(100, $count)); // Ensure count is between 1 and 100
+        $count = isset($args['count']) ? (int)$args['count'] : 1;
+        $count = max(1, min(100, $count)); // Ensure count is between 1 and 100
 
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new Book();
-            $result = $bookModel->getLatestBooks($count, $forceRefresh);
+        $bookModel = new Book();
+        $result = $bookModel->getLatestBooks($count, $forceRefresh);
 
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
 
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -353,33 +319,23 @@ class BookController
     )]
     public function random(Request $request, Response $response, array $args): Response
     {
-        try {
-            $count = isset($args['count']) ? (int)$args['count'] : 1;
-            $count = max(1, min(50, $count)); // Ensure count is between 1 and 50
+        $count = isset($args['count']) ? (int)$args['count'] : 1;
+        $count = max(1, min(50, $count)); // Ensure count is between 1 and 50
 
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new Book();
-            $result = $bookModel->getRandomBooks($count, $forceRefresh);
+        $bookModel = new Book();
+        $result = $bookModel->getRandomBooks($count, $forceRefresh);
 
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
 
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -436,33 +392,23 @@ class BookController
     )]
     public function lastVisited(Request $request, Response $response, array $args): Response
     {
-        try {
-            $count = isset($args['count']) ? (int)$args['count'] : 1;
-            $count = max(1, min(50, $count)); // Ensure count is between 1 and 50
+        $count = isset($args['count']) ? (int)$args['count'] : 1;
+        $count = max(1, min(50, $count)); // Ensure count is between 1 and 50
 
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new Book();
-            $result = $bookModel->getLastVisitedBooks($count, $forceRefresh);
+        $bookModel = new Book();
+        $result = $bookModel->getLastVisitedBooks($count, $forceRefresh);
 
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
 
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -518,33 +464,23 @@ class BookController
     )]
     public function forgotten(Request $request, Response $response, array $args): Response
     {
-        try {
-            $count = isset($args['count']) ? (int)$args['count'] : 1;
-            $count = max(1, min(50, $count)); // Ensure count is between 1 and 50
+        $count = isset($args['count']) ? (int)$args['count'] : 1;
+        $count = max(1, min(50, $count)); // Ensure count is between 1 and 50
 
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new Book();
-            $result = $bookModel->getForgottenBooks($count, $forceRefresh);
+        $bookModel = new Book();
+        $result = $bookModel->getForgottenBooks($count, $forceRefresh);
 
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
 
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -629,56 +565,36 @@ class BookController
     )]
     public function todayWithParams(Request $request, Response $response, array $args): Response
     {
-        try {
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            // Get month and date from route parameters
-            $month = (int)$args['month'];
-            $date = (int)$args['date'];
+        // Get month and date from route parameters
+        $month = (int)$args['month'];
+        $date = (int)$args['date'];
 
-            // Validate parameters
-            if ($month < 1 || $month > 12 || $date < 1 || $date > 31) {
-                $errorData = [
-                    'success' => false,
-                    'message' => 'Invalid date: month must be 1-12, date must be 1-31'
-                ];
-                $response->getBody()->write(json_encode($errorData));
-                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-            }
-
-            // Check if the date is valid using a leap year (2020) to allow Feb 29
-            // Since we're looking for books from previous years, Feb 29 is valid in leap years
-            if (!checkdate($month, $date, 2020)) {
-                $errorData = [
-                    'success' => false,
-                    'message' => 'Invalid date: the specified month and date combination does not exist'
-                ];
-                $response->getBody()->write(json_encode($errorData));
-                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-            }
-
-            $bookModel = new Book();
-            $result = $bookModel->getTodaysBooks($month, $date, $forceRefresh);
-
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache'],
-                'date_info' => $result['date_info']
-            ];
-
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        // Validate parameters
+        if ($month < 1 || $month > 12 || $date < 1 || $date > 31) {
+            throw new ValidationException('Invalid date: month must be 1-12, date must be 1-31');
         }
+
+        // Check if the date is valid using a leap year (2020) to allow Feb 29
+        // Since we're looking for books from previous years, Feb 29 is valid in leap years
+        if (!checkdate($month, $date, 2020)) {
+            throw new ValidationException('Invalid date: the specified month and date combination does not exist');
+        }
+
+        $bookModel = new Book();
+        $result = $bookModel->getTodaysBooks($month, $date, $forceRefresh);
+
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache'],
+            'date_info' => $result['date_info']
+        ];
+
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -739,35 +655,25 @@ class BookController
     )]
     public function today(Request $request, Response $response): Response
     {
-        try {
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            // Use today's date
-            $month = (int)date('n');
-            $date = (int)date('j');
+        // Use today's date
+        $month = (int)date('n');
+        $date = (int)date('j');
 
-            $bookModel = new Book();
-            $result = $bookModel->getTodaysBooks($month, $date, $forceRefresh);
+        $bookModel = new Book();
+        $result = $bookModel->getTodaysBooks($month, $date, $forceRefresh);
 
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache'],
-                'date_info' => $result['date_info']
-            ];
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache'],
+            'date_info' => $result['date_info']
+        ];
 
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -825,35 +731,25 @@ class BookController
     )]
     public function visitHistory(Request $request, Response $response): Response
     {
-        try {
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            // Get days parameter, default to 30, max 365
-            $days = isset($queryParams['days']) ? (int)$queryParams['days'] : 30;
-            $days = max(1, min(365, $days)); // Ensure days is between 1 and 365
+        // Get days parameter, default to 30, max 365
+        $days = isset($queryParams['days']) ? (int)$queryParams['days'] : 30;
+        $days = max(1, min(365, $days)); // Ensure days is between 1 and 365
 
-            $bookModel = new Book();
-            $result = $bookModel->getVisitHistory($days, $forceRefresh);
+        $bookModel = new Book();
+        $result = $bookModel->getVisitHistory($days, $forceRefresh);
 
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache'],
-                'period_info' => $result['period_info']
-            ];
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache'],
+            'period_info' => $result['period_info']
+        ];
 
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-        }
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -925,50 +821,40 @@ class BookController
     )]
     public function listBooks(Request $request, Response $response, array $args): Response
     {
-        try {
-            // Handle the case where a single numeric parameter is provided (as page number)
-            if (isset($args['type']) && is_numeric($args['type']) && !isset($args['value'])) {
-                $type = 'title';
-                $value = '-';
-                $page = (int)$args['type'];
-            } else {
-                // Set default type to 'title' and validate allowed types.
-                // Note: there is deliberately no "id" type here — an explicit
-                // bookid is a one-or-none lookup served by GET /books/{bookid}.
-                $type = $args['type'] ?? 'title';
-                if (!in_array($type, ['title', 'author', 'tags', 'misc'])) {
-                    throw new \InvalidArgumentException("Invalid type. Allowed types are: title, author, tags, misc");
-                }
-
-                // Handle value parameter with special case for '-'
-                // Note: Slim has already URL-decoded route arguments, so no
-                // extra urldecode() here — decoding again corrupts values
-                // containing '+', '/', or literal '%' sequences (e.g. C++).
-                $value = $args['value'] ?? '-';  // default to '-' for wildcard
-
-                $page = isset($args['page']) ? (int)$args['page'] : 1;
+        // Handle the case where a single numeric parameter is provided (as page number)
+        if (isset($args['type']) && is_numeric($args['type']) && !isset($args['value'])) {
+            $type = 'title';
+            $value = '-';
+            $page = (int)$args['type'];
+        } else {
+            // Set default type to 'title' and validate allowed types.
+            // Note: there is deliberately no "id" type here — an explicit
+            // bookid is a one-or-none lookup served by GET /books/{bookid}.
+            $type = $args['type'] ?? 'title';
+            if (!in_array($type, ['title', 'author', 'tags', 'misc'])) {
+                throw new ValidationException("Invalid type. Allowed types are: title, author, tags, misc");
             }
-            
-            $bookModel = new Book();
-            $result = $bookModel->listBooks($type, $value, $page);
-            
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'pagination' => $result['pagination']
-            ];
-            
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+
+            // Handle value parameter with special case for '-'
+            // Note: Slim has already URL-decoded route arguments, so no
+            // extra urldecode() here — decoding again corrupts values
+            // containing '+', '/', or literal '%' sequences (e.g. C++).
+            $value = $args['value'] ?? '-';  // default to '-' for wildcard
+
+            $page = isset($args['page']) ? (int)$args['page'] : 1;
         }
+        
+        $bookModel = new Book();
+        $result = $bookModel->listBooks($type, $value, $page);
+        
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'pagination' => $result['pagination']
+        ];
+        
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Post(
@@ -1022,36 +908,26 @@ class BookController
     )]
     public function addTags(Request $request, Response $response, array $args): Response
     {
-        try {
-            $bookid = $args['bookid'];
-            $body = $request->getBody()->getContents();
-            $data = json_decode($body, true);
-            
-            if (!isset($data['tags']) || !is_array($data['tags'])) {
-                throw new \InvalidArgumentException('Tags array is required');
-            }
-            
-            $bookModel = new Book();
-            $result = $bookModel->addBookTags($bookid, $data['tags']);
-            
-            $responseData = [
-                'success' => true,
-                'message' => 'Tags processed successfully',
-                'added_tags' => $result['added'],
-                'duplicate_tags' => $result['duplicates']
-            ];
-            
-            $response->getBody()->write(json_encode($responseData));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        $bookid = $args['bookid'];
+        $body = $request->getBody()->getContents();
+        $data = json_decode($body, true);
+        
+        if (!isset($data['tags']) || !is_array($data['tags'])) {
+            throw new ValidationException('Tags array is required');
         }
+        
+        $bookModel = new Book();
+        $result = $bookModel->addBookTags($bookid, $data['tags']);
+        
+        $responseData = [
+            'success' => true,
+            'message' => 'Tags processed successfully',
+            'added_tags' => $result['added'],
+            'duplicate_tags' => $result['duplicates']
+        ];
+        
+        $response->getBody()->write(json_encode($responseData));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -1130,53 +1006,37 @@ class BookController
     )]
     public function getRelatedBooks(Request $request, Response $response, array $args): Response
     {
-        try {
-            $startTime = microtime(true);
-            $bookid = $args['bookid'];
-            $count = isset($args['count']) ? (int)$args['count'] : 5;
-            $count = max(1, min(20, $count)); // Ensure count is between 1 and 20
+        $startTime = microtime(true);
+        $bookid = $args['bookid'];
+        $count = isset($args['count']) ? (int)$args['count'] : 5;
+        $count = max(1, min(20, $count)); // Ensure count is between 1 and 20
 
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
-            $bookModel = new Book();
-            $result = $bookModel->getRelatedBooks($bookid, $count, $forceRefresh);
+        $bookModel = new Book();
+        $result = $bookModel->getRelatedBooks($bookid, $count, $forceRefresh);
 
-            if ($result === null) {
-                $errorData = [
-                    'success' => false,
-                    'message' => 'Book not found'
-                ];
-
-                $response->getBody()->write(json_encode($errorData));
-                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
-            }
-
-            $computationTime = round((microtime(true) - $startTime) * 1000, 2);
-
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'categories' => $result['categories'] ?? [],
-                'discovery_info' => $result['discovery_info'] ?? [],
-                'algorithm_info' => [
-                    'primary_factors' => $result['primary_factors'],
-                    'computation_time' => $computationTime . 'ms',
-                    'cached' => $result['from_cache']
-                ]
-            ];
-
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        if ($result === null) {
+            throw new NotFoundException('Book not found');
         }
+
+        $computationTime = round((microtime(true) - $startTime) * 1000, 2);
+
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'categories' => $result['categories'] ?? [],
+            'discovery_info' => $result['discovery_info'] ?? [],
+            'algorithm_info' => [
+                'primary_factors' => $result['primary_factors'],
+                'computation_time' => $computationTime . 'ms',
+                'cached' => $result['from_cache']
+            ]
+        ];
+
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -1244,43 +1104,27 @@ class BookController
     )]
     public function popular(Request $request, Response $response, array $args): Response
     {
-        try {
-            $count = isset($args['count']) ? (int)$args['count'] : 10;
-            
-            // Validate count parameter
-            if ($count < 1 || $count > 50) {
-                $errorData = [
-                    'success' => false,
-                    'message' => 'Count must be between 1 and 50'
-                ];
-                
-                $response->getBody()->write(json_encode($errorData));
-                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-            }
-
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
-
-            $bookModel = new Book();
-            $result = $bookModel->getMostPopularBooks($count, $forceRefresh);
-
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['from_cache']
-            ];
-
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        $count = isset($args['count']) ? (int)$args['count'] : 10;
+        
+        // Validate count parameter
+        if ($count < 1 || $count > 50) {
+            throw new ValidationException('Count must be between 1 and 50');
         }
+
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+
+        $bookModel = new Book();
+        $result = $bookModel->getMostPopularBooks($count, $forceRefresh);
+
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
+
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     #[OA\Get(
@@ -1348,43 +1192,27 @@ class BookController
     )]
     public function unpopular(Request $request, Response $response, array $args): Response
     {
-        try {
-            $count = isset($args['count']) ? (int)$args['count'] : 10;
-            
-            // Validate count parameter
-            if ($count < 1 || $count > 50) {
-                $errorData = [
-                    'success' => false,
-                    'message' => 'Count must be between 1 and 50'
-                ];
-                
-                $response->getBody()->write(json_encode($errorData));
-                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-            }
-
-            $queryParams = $request->getQueryParams();
-            $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
-
-            $bookModel = new Book();
-            $result = $bookModel->getMostUnpopularBooks($count, $forceRefresh);
-
-            $data = [
-                'success' => true,
-                'data' => $result['data'],
-                'cached' => $result['cached']
-            ];
-
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-
-        } catch (\Exception $e) {
-            $errorData = [
-                'success' => false,
-                'message' => 'Internal server error: ' . $e->getMessage()
-            ];
-            
-            $response->getBody()->write(json_encode($errorData));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        $count = isset($args['count']) ? (int)$args['count'] : 10;
+        
+        // Validate count parameter
+        if ($count < 1 || $count > 50) {
+            throw new ValidationException('Count must be between 1 and 50');
         }
+
+        $queryParams = $request->getQueryParams();
+        $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
+
+        $bookModel = new Book();
+        $result = $bookModel->getMostUnpopularBooks($count, $forceRefresh);
+
+        $data = [
+            'success' => true,
+            'data' => $result['data'],
+            'cached' => $result['from_cache']
+        ];
+
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
+
     }
 }
