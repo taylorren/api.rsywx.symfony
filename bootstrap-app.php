@@ -142,8 +142,9 @@ $app->group('/api/' . $_ENV['API_VERSION'], function ($group) {
     $group->get('/readings/latest[/{count:[0-9]+}]', \App\Controllers\ReadingController::class . ':latest');
     $group->get('/readings/reviews[/{page:[0-9]+}]', \App\Controllers\ReadingController::class . ':reviews');
 
-    $group->get('/wp/posts/today/{month:[0-9]+}/{day:[0-9]+}', \App\Controllers\WordPressController::class . ':getPostsOnThisDay');
-    $group->get('/wp/posts/today', \App\Controllers\WordPressController::class . ':getTodaysPosts');
+    $group->get('/blogs/today/{month:[0-9]+}/{day:[0-9]+}', \App\Controllers\BlogController::class . ':todayWithParams');
+    $group->get('/blogs/today', \App\Controllers\BlogController::class . ':today');
+    $group->get('/blogs/latest[/{count:[0-9]+}]', \App\Controllers\BlogController::class . ':latest');
 });
 
 return $app;

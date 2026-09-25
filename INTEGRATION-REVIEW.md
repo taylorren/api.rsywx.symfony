@@ -100,8 +100,10 @@ when no corresponding frontend-local file exists.
 
 **Evidence:** several frontend helpers ignore HTTP status and only reject
 `success: false`. Non-envelope JSON failures can become empty results or
-undefined pagination. `src/Controllers/WordPressController.php` also returns
-`success: false` on dependency failure without setting a failure HTTP status.
+undefined pagination. `src/Controllers/BlogController.php` previously returned
+`success: false` on dependency failure without setting a failure HTTP status;
+it now throws `UpstreamException` (502) / `ValidationException` (400), but the
+general pattern may still exist elsewhere.
 
 - [ ] Document success/error envelopes and appropriate HTTP statuses for
   consumed endpoints, including the intentionally unwrapped health response.

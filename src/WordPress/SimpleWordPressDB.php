@@ -81,6 +81,74 @@ class SimpleWordPressDB
     }
 
     /**
+     * Get the latest published posts (newest first).
+     * Used by the frontend index page for its "latest posts" block.
+     */
+    public function getLatestPosts(int $count = 3): array
+    {
+        $count = max(1, $count);
+
+        // Include post_content so an excerpt can be derived when the
+        // stored post_excerpt is empty; it is stripped before returning.
+        $sql = "SELECT p.ID, p.post_title, p.post_name, p.post_excerpt,
+                       p.post_content, p.post_date, p.post_status,
+                       u.display_name as author
+                FROM {$this->prefix}posts p
+                LEFT JOIN {$this->prefix}users u ON p.post_author = u.ID
+                WHERE p.post_status = 'publish'
+                AND p.post_type = 'post'
+                ORDER BY p.post_date DESC
+                LIMIT ?";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$count]);
+        $posts = $stmt->fetchAll();
+
+        $blogUrl = $_ENV['WP_BLOG_URL'] ?? 'https://blog.rsywx.net';
+        foreach ($posts as &$post) {
+            $post['post_excerpt'] = self::buildExcerpt($post['post_excerpt'], $post['post_content']);
+            unset($post['post_content']); // too long for a list response
+
+            // Generate WordPress permalink: https://blog.rsywx.net/YYYY/MM/DD/post-name/
+            $date = new \DateTime($post['post_date']);
+            $post['permalink'] = sprintf(
+                '%s/%04d/%02d/%02d/%s/',
+                rtrim($blogUrl, '/'),
+                $date->format('Y'),
+                $date->format('m'),
+                $date->format('d'),
+                $post['post_name']
+            );
+        }
+
+        return $posts;
+    }
+
+    /**
+     * Build a plain-text excerpt: the stored excerpt wins when present,
+     * otherwise fall back to the first 150 characters of the post content
+     * with HTML stripped and whitespace collapsed.
+     */
+    public static function buildExcerpt(?string $excerpt, ?string $content, int $maxLength = 150): string
+    {
+        $excerpt = trim((string)$excerpt);
+        if ($excerpt !== '') {
+            return $excerpt;
+        }
+
+        $text = strip_tags((string)$content);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/[\s\x{00A0}]+/u', ' ', $text) ?? '';
+        $text = trim($text);
+
+        if ($text === '' || mb_strlen($text) <= $maxLength) {
+            return $text;
+        }
+
+        return rtrim(mb_substr($text, 0, $maxLength)) . '...';
+    }
+
+    /**
      * Raw query for custom needs
      */
     public function query(string $sql, array $params = []): array

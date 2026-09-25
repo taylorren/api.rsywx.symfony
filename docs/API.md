@@ -517,11 +517,11 @@ Path: `page` (default `1`). Fixed at **9 reviews per page**.
 
 ---
 
-### 4.5 WordPress — "On this day in history"
+### 4.5 Blog — "On this day in history" & latest posts
 
-#### `GET /wp/posts/today[/{month}/{day}]` — Posts on this day
-`GET /wp/posts/today` — for today's date.
-`GET /wp/posts/today/{month}/{day}` — for a specific date (previous years, excluding current year).
+#### `GET /blogs/today[/{month}/{day}]` — Posts on this day
+`GET /blogs/today` — for today's date.
+`GET /blogs/today/{month}/{day}` — for a specific date (previous years, excluding current year).
 ```jsonc
 {
   "success": true,
@@ -539,13 +539,42 @@ Path: `page` (default `1`). Fixed at **9 reviews per page**.
     }
   ],
   "date_info": { "month": 9, "day": 5, "date_string": "September 5", "is_today": true },
-  "count": 6
+  "count": 6,
+  "cached": true
 }
 ```
+`?refresh=true` forces a cache refresh.
 HTTP `400` for invalid month/day:
 ```json
 { "success": false, "message": "Invalid date parameters" }
 ```
+HTTP `502` when the WordPress database is unreachable.
+
+#### `GET /blogs/latest[/{count}]` — Latest posts
+Returns the most recent `count` posts, newest first. Defaults to **3**, clamped to `1..50`.
+```jsonc
+{
+  "success": true,
+  "data": [
+    {
+      "ID": 9901,
+      "post_title": "最新文章",
+      "post_name": "latest-post",
+      "post_excerpt": "Stored excerpt, or the first 150 chars of the content with HTML stripped...",
+      "post_date": "2026-09-20 08:00:00",
+      "post_status": "publish",
+      "author": "root",
+      "permalink": "https://blog.rsywx.net/2026/09/20/latest-post/"
+    }
+  ],
+  "count": 3,
+  "cached": false
+}
+```
+`post_excerpt` never falls back to raw HTML: when the stored excerpt is empty,
+the content is stripped of tags, decoded, whitespace-collapsed and truncated to
+150 characters (with `...`). `post_content` is never included in list responses.
+`?refresh=true` forces a cache refresh.
 
 ---
 
@@ -560,6 +589,8 @@ HTTP `400` for invalid month/day:
 | `/misc/wotd`, `/misc/qotd` | short | random content |
 | `/books/last_visited`, `/forgotten`, `/popular` | may be cached | varies |
 | `/books/today[/{month}/{date}]` | 24h | `?refresh=true` to force |
+| `/blogs/today[/{month}/{day}]` | 24h | `?refresh=true` to force |
+| `/blogs/latest[/{count}]` | 1h | `?refresh=true` to force |
 
 For a freshly-updated value, append `?refresh=true`.
 
@@ -574,4 +605,5 @@ For a freshly-updated value, append `?refresh=true`.
 5. `GET /books/{bookid}` — detail view (fires a visit, which increments `total_visits`).
 6. `GET /books/popular/10`, `GET /books/forgotten/10` — recommendation shelves.
 7. `GET /readings/reviews/{page}` and `GET /readings/latest` — blog/review widgets.
-8. `GET /wp/posts/today` — "on this day in history" widget.
+8. `GET /blogs/today` — "on this day in history" widget.
+9. `GET /blogs/latest/3` — latest blog posts widget on the index page.

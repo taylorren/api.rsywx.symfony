@@ -8,6 +8,131 @@ servers:
     url: /api/v1
     description: 'API v1'
 paths:
+  '/blogs/today/{month}/{day}':
+    get:
+      tags:
+        - Blog
+      summary: 'Get blog posts for specific date'
+      description: "Returns blog posts published on a specific date in previous years (excluding current year) - like 'on this day in history' for your blog."
+      operationId: c34e54bd5cee7977bd04abd3ce2f20ae
+      parameters:
+        -
+          name: month
+          in: path
+          description: 'Month (1-12)'
+          required: true
+          schema:
+            type: integer
+            maximum: 12
+            minimum: 1
+            example: 9
+        -
+          name: day
+          in: path
+          description: 'Day of month (1-31)'
+          required: true
+          schema:
+            type: integer
+            maximum: 31
+            minimum: 1
+            example: 5
+      responses:
+        '200':
+          description: 'Blog posts published on the specified date in previous years'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { ID: { type: integer, example: 9879 }, post_title: { type: string, example: 三个AI做一道小题目 }, post_name: { type: string, example: three-ai-small-problem }, post_excerpt: { type: string, example: 'Post excerpt...' }, post_date: { type: string, example: '2022-09-05 10:23:28' }, post_status: { type: string, example: publish }, author: { type: string, example: root }, years_ago: { description: 'How many years ago this post was published', type: integer, example: 2 }, permalink: { description: 'Full WordPress permalink URL to the post', type: string, example: 'https://blog.rsywx.net/2022/09/05/three-ai-small-problem/' } }, type: object } }
+                  date_info: { properties: { month: { type: integer, example: 9 }, day: { type: integer, example: 5 }, date_string: { type: string, example: 'September 5' }, is_today: { type: boolean, example: true } }, type: object }
+                  count: { type: integer, example: 6 }
+                type: object
+        '400':
+          description: 'Invalid date parameters'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: false }
+                  message: { type: string, example: 'Invalid date parameters' }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  /blogs/today:
+    get:
+      tags:
+        - Blog
+      summary: 'Get blog posts for today in history'
+      description: "Returns blog posts published on today's date in previous years (excluding current year) - like 'on this day in history' for your blog."
+      operationId: 012e6ceffde9eb6d1e4ab4c2e57d81ed
+      parameters:
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: "Blog posts published on today's date in previous years"
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { ID: { type: integer, example: 9879 }, post_title: { type: string, example: "Don't be a ..." }, post_name: { type: string, example: dont-be-a }, post_excerpt: { type: string, example: 'Post excerpt...' }, post_date: { type: string, example: '2022-09-05 10:23:28' }, post_status: { type: string, example: publish }, author: { type: string, example: root }, years_ago: { description: 'How many years ago this post was published', type: integer, example: 2 }, permalink: { description: 'WordPress permalink to the post', type: string, example: /2022/09/05/dont-be-a/ } }, type: object } }
+                  date_info: { properties: { month: { type: integer, example: 9 }, day: { type: integer, example: 5 }, date_string: { type: string, example: 'September 5' }, is_today: { type: boolean, example: true } }, type: object }
+                  count: { type: integer, example: 6 }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
+  '/blogs/latest/{count}':
+    get:
+      tags:
+        - Blog
+      summary: 'Get latest blog posts'
+      description: 'Returns the most recently published blog posts, ordered by date (newest first) - for the frontend index page.'
+      operationId: 2d0e349e4a839c14fcff54cdfc104128
+      parameters:
+        -
+          name: count
+          in: path
+          description: 'Number of posts to return (defaults to 3)'
+          required: false
+          schema:
+            type: integer
+            maximum: 50
+            minimum: 1
+            example: 3
+        -
+          name: refresh
+          in: query
+          description: 'Force refresh cache'
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: 'Latest blog posts'
+          content:
+            application/json:
+              schema:
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { properties: { ID: { type: integer, example: 9879 }, post_title: { type: string, example: 三个AI做一道小题目 }, post_name: { type: string, example: three-ai-small-problem }, post_excerpt: { type: string, example: 'Post excerpt (falls back to the first 150 characters of the content)...' }, post_date: { type: string, example: '2025-09-01 10:30:00' }, post_status: { type: string, example: publish }, author: { type: string, example: root }, permalink: { description: 'Full WordPress permalink URL to the post', type: string, example: 'https://blog.rsywx.net/2025/09/01/three-ai-small-problem/' } }, type: object } }
+                  count: { type: integer, example: 3 }
+                  cached: { type: boolean, example: true }
+                type: object
+      security:
+        -
+          ApiKeyAuth: []
   /books/status:
     get:
       tags:
@@ -873,80 +998,6 @@ paths:
                   message: { type: string, example: 'API is running' }
                   timestamp: { type: string, example: '2025-07-27 10:30:00' }
                 type: object
-  '/wp/posts/today/{month}/{day}':
-    get:
-      tags:
-        - WordPress
-      summary: 'Get WordPress posts for specific date'
-      description: "Returns WordPress posts published on a specific date in previous years (excluding current year) - like 'on this day in history' for your WordPress blog."
-      operationId: 038cc40b365dec9f1562db19b1752903
-      parameters:
-        -
-          name: month
-          in: path
-          description: 'Month (1-12)'
-          required: true
-          schema:
-            type: integer
-            maximum: 12
-            minimum: 1
-            example: 9
-        -
-          name: day
-          in: path
-          description: 'Day of month (1-31)'
-          required: true
-          schema:
-            type: integer
-            maximum: 31
-            minimum: 1
-            example: 5
-      responses:
-        '200':
-          description: 'WordPress posts published on the specified date in previous years'
-          content:
-            application/json:
-              schema:
-                properties:
-                  success: { type: boolean, example: true }
-                  data: { type: array, items: { properties: { ID: { type: integer, example: 9879 }, post_title: { type: string, example: 三个AI做一道小题目 }, post_name: { type: string, example: three-ai-small-problem }, post_excerpt: { type: string, example: 'Post excerpt...' }, post_date: { type: string, example: '2022-09-05 10:23:28' }, post_status: { type: string, example: publish }, author: { type: string, example: root }, years_ago: { description: 'How many years ago this post was published', type: integer, example: 2 }, permalink: { description: 'Full WordPress permalink URL to the post', type: string, example: 'https://blog.rsywx.net/2022/09/05/three-ai-small-problem/' } }, type: object } }
-                  date_info: { properties: { month: { type: integer, example: 9 }, day: { type: integer, example: 5 }, date_string: { type: string, example: 'September 5' }, is_today: { type: boolean, example: true } }, type: object }
-                  count: { type: integer, example: 6 }
-                type: object
-        '400':
-          description: 'Invalid date parameters'
-          content:
-            application/json:
-              schema:
-                properties:
-                  success: { type: boolean, example: false }
-                  message: { type: string, example: 'Invalid date parameters' }
-                type: object
-      security:
-        -
-          ApiKeyAuth: []
-  /wp/posts/today:
-    get:
-      tags:
-        - WordPress
-      summary: 'Get WordPress posts for today in history'
-      description: "Returns WordPress posts published on today's date in previous years (excluding current year) - like 'on this day in history' for your WordPress blog."
-      operationId: 6a3eb6eb41fdc6ab775c7f43f8a2c0eb
-      responses:
-        '200':
-          description: "WordPress posts published on today's date in previous years"
-          content:
-            application/json:
-              schema:
-                properties:
-                  success: { type: boolean, example: true }
-                  data: { type: array, items: { properties: { ID: { type: integer, example: 9879 }, post_title: { type: string, example: "Don't be a ..." }, post_name: { type: string, example: dont-be-a }, post_excerpt: { type: string, example: 'Post excerpt...' }, post_date: { type: string, example: '2022-09-05 10:23:28' }, post_status: { type: string, example: publish }, author: { type: string, example: root }, years_ago: { description: 'How many years ago this post was published', type: integer, example: 2 }, permalink: { description: 'WordPress permalink to the post', type: string, example: /2022/09/05/dont-be-a/ } }, type: object } }
-                  date_info: { properties: { month: { type: integer, example: 9 }, day: { type: integer, example: 5 }, date_string: { type: string, example: 'September 5' }, is_today: { type: boolean, example: true } }, type: object }
-                  count: { type: integer, example: 6 }
-                type: object
-      security:
-        -
-          ApiKeyAuth: []
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -955,6 +1006,9 @@ components:
       name: X-API-Key
       in: header
 tags:
+  -
+    name: Blog
+    description: Blog
   -
     name: Books
     description: Books
@@ -982,6 +1036,3 @@ tags:
   -
     name: System
     description: System
-  -
-    name: WordPress
-    description: WordPress
