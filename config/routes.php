@@ -37,7 +37,7 @@ return function (Slim\App $app): void {
         $group->get('/books/today/{month:[0-9]+}/{date:[0-9]+}', BookController::class . ':todayWithParams');
         $group->get('/books/today', BookController::class . ':today');
         $group->get('/books/visit_history', BookController::class . ':visitHistory');
-        $group->get('/books/list[/{type}[/{value}[/{page:[0-9]+}]]]', BookController::class . ':listBooks');
+        $group->get('/books/list[/{type}[/{value:.*}]]', BookController::class . ':listBooks');
         $group->get('/books/{bookid:[0-9]{5}}', BookController::class . ':show');
 
         // Miscellaneous endpoints

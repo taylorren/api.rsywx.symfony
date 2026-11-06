@@ -6,6 +6,7 @@ use App\Database\Connection;
 use App\Exceptions\NotFoundException;
 use App\Cache\ApcuCache;
 use App\Config\Config;
+use App\Support\ClientIp;
 use PDO;
 
 class Book
@@ -656,32 +657,10 @@ class Book
 
     private function getClientIpAddress(): ?string
     {
-        // Check for various headers that might contain the real IP
-        $ipHeaders = [
-            'HTTP_X_FORWARDED_FOR',
-            'HTTP_X_REAL_IP',
-            'HTTP_CF_CONNECTING_IP', // Cloudflare
-            'HTTP_CLIENT_IP',
-            'HTTP_X_FORWARDED',
-            'HTTP_FORWARDED_FOR',
-            'HTTP_FORWARDED',
-            'REMOTE_ADDR'
-        ];
-
-        foreach ($ipHeaders as $header) {
-            if (!empty($_SERVER[$header])) {
-                $ips = explode(',', $_SERVER[$header]);
-                $ip = trim($ips[0]); // Take the first IP if multiple
-
-                // Validate IP address
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                    return $ip;
-                }
-            }
-        }
-
-        // Fallback to REMOTE_ADDR even if it's private/reserved
-        return $_SERVER['REMOTE_ADDR'] ?? null;
+        // Forwarding headers (X-Forwarded-For, X-Real-IP, CF-Connecting-IP, ...)
+        // are only trusted when the immediate peer (REMOTE_ADDR) is a configured
+        // proxy (TRUSTED_PROXIES); otherwise a client could spoof its address.
+        return ClientIp::resolve($_SERVER, Config::trustedProxies());
     }
 
     private function getIpGeolocation(?string $ipAddress): array

@@ -78,4 +78,24 @@ final class Config
     {
         return self::bool('RECORD_VISITS', true);
     }
+
+    /**
+     * Trusted proxy IPs / CIDRs (comma-separated) from TRUSTED_PROXIES.
+     * Forwarding headers are only honoured when the request's REMOTE_ADDR is in
+     * this list. Empty means "trust nobody" (use REMOTE_ADDR only).
+     *
+     * @return string[]
+     */
+    public static function trustedProxies(): array
+    {
+        $raw = self::get('TRUSTED_PROXIES', '');
+        if ($raw === null || trim($raw) === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map('trim', explode(',', $raw)),
+            static fn (string $value): bool => $value !== ''
+        ));
+    }
 }

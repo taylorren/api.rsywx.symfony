@@ -53,6 +53,45 @@ class BookResponse
 
     private array $setFields = [];
 
+    /** Fields documented as integers. */
+    private const INT_FIELDS = ['id', 'page', 'kword', 'total_visits', 'days_since_visit', 'years_ago'];
+
+    /** Fields documented as numbers (float) or null. */
+    private const FLOAT_FIELDS = ['price'];
+
+    /** Fields documented as booleans. */
+    private const BOOL_FIELDS = ['translated', 'instock'];
+
+    /**
+     * Coerce known fields to their documented wire types so list-type
+     * responses match the book-detail response (e.g. `translated` as boolean,
+     * `price` as number|null). Null values stay null.
+     */
+    private function normalizeTypes(): void
+    {
+        foreach (self::INT_FIELDS as $field) {
+            if ($this->$field !== null) {
+                $this->$field = (int) $this->$field;
+            }
+        }
+
+        foreach (self::FLOAT_FIELDS as $field) {
+            if ($this->$field !== null) {
+                $this->$field = (float) $this->$field;
+            }
+        }
+
+        foreach (self::BOOL_FIELDS as $field) {
+            if ($this->$field !== null) {
+                $this->$field = (bool) $this->$field;
+            }
+        }
+
+        if ($this->bookid !== null) {
+            $this->bookid = (string) $this->bookid;
+        }
+    }
+
     public function __construct(array $data = [])
     {
         foreach ($data as $key => $value) {
@@ -67,6 +106,10 @@ class BookResponse
             $this->cover_uri = Config::coverUri((string) $this->bookid);
             $this->setFields[] = 'cover_uri';
         }
+
+        // Coerce known fields to their documented wire types so list-type
+        // responses match the book-detail response.
+        $this->normalizeTypes();
         
         // Ensure core fields are always in setFields
         $coreFields = ['id', 'bookid', 'title', 'author', 'cover_uri', 'translated', 'copyrighter', 'region', 'location'];

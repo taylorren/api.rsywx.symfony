@@ -79,7 +79,15 @@ Some endpoints add **`message`** (on success or error) and/or **`pagination`**.
 - `cached: false` on first hit (data fetched + cached), `true` on subsequent hits.
 - **`?refresh=true`** on any cached endpoint forces a cache refresh
   (recomputes from the database) regardless of TTL.
-- `cover_uri` values are absolute URLs to book cover images.
+- `cover_uri` values are absolute URLs to book cover images (the frontend serves
+  its own `/covers/{bookid}.jpg` and does not rely on this field — see below).
+
+### Wire types
+- `translated` and `instock` are **booleans**.
+- `price` is a **number or `null`**.
+- `id`, `total_visits`, `page`, `kword` are **integers**.
+- `bookid` and `cover_uri` are **strings**.
+- List and detail responses use the **same** types for shared fields.
 ---
 
 ## 4. Endpoint reference
@@ -165,7 +173,15 @@ Returns full book record incl. tags, reviews, cover, and visit stats:
     "publisher_name": "花城出版社",
     "place_name": "上海",
     "tags": ["意大利", "散文", "文学", "经典"],
-    "reviews": [],
+    "reviews": [
+      {
+        "id": 184,
+        "title": "Theory of Everything",
+        "datein": "2022-01-30",
+        "uri": "https://blog.rsywx.net/2022/01/30/theory-of-everything/",
+        "feature": "https://blog.rsywx.net/wp-content/uploads/2022/06/01725.jpg"
+      }
+    ],
     "cover_uri": "https://api.rsywx.com/covers/00666.jpg",
     "total_visits": 4843,
     "last_visited": "2026-08-20 14:12:00"
@@ -173,21 +189,36 @@ Returns full book record incl. tags, reviews, cover, and visit stats:
   "cached": true
 }
 ```
+> ℹ️ **Embedded `reviews`** use a separate, minimal schema: `id`, `title`,
+> `datein`, `uri` (link to the review) and `feature` (the **review's own** image,
+> a full URL — it may be a review photo and thus differ from the book cover).
+> This is **not** the reading-list shape: `/readings/reviews` and
+> `/readings/latest` additionally include `bookid`, `book_title`, and
+> `cover_uri`, because they list reviews across many books. In the book-detail
+> view, render the review image from `feature` and the review link from `uri`;
+> take the book cover from the parent book. `reviews` is `[]` when a book has none.
+
 
 ---
 
 #### `GET /books/list[/{type}[/{value}[/{page}]]]` — Search & list
-All segments optional. `type` one of `author | title | tag | misc | id`
-(default `id`). `value` is the search term. `page` is 1-based (default `1`).
-`per_page` is fixed at **20**.
+All segments optional. `type` one of `author | title | tags | misc`
+(default `title`). `value` is the search term; URL-encode it (`/` → `%2F`,
+`%` → `%25`, `+` → `%2B`) — it may contain encoded slashes. `page` is 1-based
+(default `1`), sent as the trailing segment. `per_page` is fixed at **20**.
 
 | Example |
 |---|
 | `GET /books/list` — all books, page 1, newest first |
 | `GET /books/list/author/卡尔维诺` |
 | `GET /books/list/title/城` |
-| `GET /books/list/tag/经典/2` |
-| `GET /books/list/id/00666` |
+| `GET /books/list/tags/经典/2` |
+| `GET /books/list/title/C%2B%2B` — titles containing `C++` |
+| `GET /books/list/title/a%2Fb` — titles containing `a/b` |
+
+> Note: an explicit `bookid` is **not** a list type — use `GET /books/{bookid}`.
+> The search value is a catch-all segment; a value ending in `/<digits>` is read
+> as value + page (e.g. `.../24/7` → value `24`, page `7`).
 
 ```jsonc
 {
@@ -203,6 +234,7 @@ All segments optional. `type` one of `author | title | tag | misc | id`
       "region": "意大利",
       "location": "书房",
       "purchdate": "2020-05-15",
+      "price": 45,
       "tags": ["意大利", "文学", "经典"],
       "cover_uri": "https://api.rsywx.com/covers/00666.jpg"
     }

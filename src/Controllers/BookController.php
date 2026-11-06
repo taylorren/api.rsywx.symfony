@@ -159,7 +159,20 @@ class BookController
                         "publisher_name" => new OA\Property(property: "publisher_name", type: "string", example: "花城出版社"),
                         "place_name" => new OA\Property(property: "place_name", type: "string", example: "上海"),
                         "tags" => new OA\Property(property: "tags", type: "array", items: new OA\Items(type: "string"), example: ["意大利", "散文", "文学", "经典"]),
-                        "reviews" => new OA\Property(property: "reviews", type: "array", items: new OA\Items(type: "object")),
+                        "reviews" => new OA\Property(
+                            property: "reviews",
+                            type: "array",
+                            items: new OA\Items(
+                                type: "object",
+                                properties: [
+                                    "id" => new OA\Property(property: "id", type: "integer", example: 184),
+                                    "title" => new OA\Property(property: "title", type: "string", example: "Theory of Everything"),
+                                    "datein" => new OA\Property(property: "datein", type: "string", example: "2022-01-30"),
+                                    "uri" => new OA\Property(property: "uri", type: "string", example: "https://blog.rsywx.net/2022/01/30/theory-of-everything/"),
+                                    "feature" => new OA\Property(property: "feature", type: "string", nullable: true, example: "https://blog.rsywx.net/wp-content/uploads/2022/06/01725.jpg")
+                                ]
+                            )
+                        ),
                         "cover_uri" => new OA\Property(property: "cover_uri", type: "string", example: "https://api.rsywx.com/covers/00666.jpg"),
                         "total_visits" => new OA\Property(property: "total_visits", type: "integer", example: 4843),
                         "last_visited" => new OA\Property(property: "last_visited", type: "string", example: "2025-07-27 07:29:57")
@@ -775,9 +788,9 @@ class BookController
     }
 
     #[OA\Get(
-        path: "/books/list/{type?}/{value?}/{page?}",
+        path: "/books/list/{type?}/{value?}",
         summary: "List/search books",
-        description: "Search books by author, title, tag, or misc criteria with pagination. All parameters are optional. Default: list all books ordered by id DESC, page 1",
+        description: "Search books by author, title, tag, or misc criteria with pagination. All parameters are optional. Default: list all books ordered by id DESC, page 1. The value is a catch-all segment and may contain URL-encoded slashes and percent signs; an optional trailing '/{page}' selects the page.",
         tags: ["Book Lists"],
         security: [["ApiKeyAuth" => []]]
     )]
@@ -791,14 +804,14 @@ class BookController
     #[OA\Parameter(
         name: "value",
         in: "path",
-        description: "Search value (use '-' for a wildcard / unfiltered list)",
+        description: "Search value. May contain URL-encoded '/' and '%' (e.g. a%2Fb, C%2B%2B). Use '-' for a wildcard / unfiltered list. May be followed by an optional trailing '/{page}'.",
         required: false,
         schema: new OA\Schema(type: "string", example: "卡尔维诺")
     )]
     #[OA\Parameter(
         name: "page",
         in: "path",
-        description: "Page number (1-based, default: 1)",
+        description: "Page number (1-based, default: 1), sent as a trailing segment after the value: /books/list/{type}/{value}/{page}",
         required: false,
         schema: new OA\Schema(type: "integer", minimum: 1, example: 1, default: 1)
     )]
@@ -843,7 +856,8 @@ class BookController
     )]
     public function listBooks(Request $request, Response $response, array $args): Response
     {
-        // Handle the case where a single numeric parameter is provided (as page number)
+        // Shorthand: a single numeric segment is the page number,
+        // e.g. GET /books/list/2  ->  all books, page 2.
         if (isset($args['type']) && is_numeric($args['type']) && !isset($args['value'])) {
             $type = 'title';
             $value = '-';
@@ -857,13 +871,20 @@ class BookController
                 throw new ValidationException("Invalid type. Allowed types are: title, author, tags, misc");
             }
 
-            // Handle value parameter with special case for '-'
-            // Note: Slim has already URL-decoded route arguments, so no
-            // extra urldecode() here — decoding again corrupts values
-            // containing '+', '/', or literal '%' sequences (e.g. C++).
-            $value = $args['value'] ?? '-';  // default to '-' for wildcard
-
-            $page = isset($args['page']) ? (int)$args['page'] : 1;
+            // The value is a catch-all segment so it can contain '/' and '%'.
+            // Slim runs rawurldecode() on the path before routing, so a literal
+            // '/' can never be a normal single-segment placeholder (e.g. "a/b");
+            // a catch-all is the only way to accept it. An optional trailing
+            // "/<digits>" is the page number; everything else (including values
+            // that contain slashes) is the search text. Slim has already
+            // URL-decoded the argument, so no extra urldecode() here — decoding
+            // again corrupts values such as "C++".
+            $value = $args['value'] ?? '-';
+            $page = 1;
+            if (preg_match('#^(.*)/([0-9]+)$#', $value, $matches)) {
+                $value = $matches[1];
+                $page = (int)$matches[2];
+            }
         }
         
         $bookModel = new Book();

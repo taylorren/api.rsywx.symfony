@@ -245,21 +245,89 @@ class BookListEndpointTest extends BaseTestCase
     }
 
     /**
-     * KNOWN TRANSPORT LIMITATION (INT-02): an encoded slash (%2F) inside a
-     * path segment fails Slim route matching (404) before the controller
-     * runs, so the double-decode fix cannot help here. Resolving this
-     * requires a coordinated transport change (e.g. a query parameter for
-     * the search value). This test pins the current behavior so any
-     * accidental change is noticed.
+     * An encoded slash (%2F) must NOT 404. Slim runs rawurldecode() on the
+     * path before routing, so the value is a catch-all segment and an optional
+     * trailing "/<page>" is parsed by the controller. The endpoint result must
+     * equal a direct model search for the decoded "a/b".
      */
-    public function testEncodedSlashIsAKnownTransportLimitation()
+    public function testEncodedSlashReachesModelUnchanged()
     {
         $request = $this->createRequest('GET', '/api/v1/books/list/title/a%2Fb/1', [
             'X-API-Key' => $this->validApiKey
         ]);
         $response = $this->runApp($request);
 
-        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertEquals(200, $response->getStatusCode());
+        $data = json_decode((string)$response->getBody(), true);
+        $this->assertTrue($data['success']);
+
+        $model = new \App\Models\Book();
+        $expected = $model->listBooks('title', 'a/b', 1);
+
+        $this->assertSame(
+            $expected['pagination']['total_results'],
+            $data['pagination']['total_results'],
+            'Encoded a%2Fb must search for the literal "a/b", not fail route matching'
+        );
+    }
+
+    /**
+     * A literal percent sequence (%25 -> "%") must reach the model unchanged.
+     */
+    public function testEncodedPercentReachesModelUnchanged()
+    {
+        $request = $this->createRequest('GET', '/api/v1/books/list/title/a%25b/1', [
+            'X-API-Key' => $this->validApiKey
+        ]);
+        $response = $this->runApp($request);
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $data = json_decode((string)$response->getBody(), true);
+        $this->assertTrue($data['success']);
+
+        $model = new \App\Models\Book();
+        $expected = $model->listBooks('title', 'a%b', 1);
+
+        $this->assertSame(
+            $expected['pagination']['total_results'],
+            $data['pagination']['total_results'],
+            'Encoded a%25b must search for the literal "a%b"'
+        );
+    }
+
+    /**
+     * Pagination must still parse with the catch-all value segment: an optional
+     * trailing "/<page>" is treated as the page number, for both ordinary and
+     * slash-containing values.
+     */
+    public function testPaginationStillParsesWithCatchAllValue()
+    {
+        // Ordinary value with a trailing page.
+        $request = $this->createRequest('GET', '/api/v1/books/list/title/-/2', [
+            'X-API-Key' => $this->validApiKey
+        ]);
+        $response = $this->runApp($request);
+        $data = json_decode((string)$response->getBody(), true);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(2, $data['pagination']['current_page']);
+
+        // Value containing an encoded slash, with a trailing page: the page is
+        // the trailing number, the rest (including the slash) is the value.
+        $request = $this->createRequest('GET', '/api/v1/books/list/title/a%2Fb/3', [
+            'X-API-Key' => $this->validApiKey
+        ]);
+        $response = $this->runApp($request);
+        $data = json_decode((string)$response->getBody(), true);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(3, $data['pagination']['current_page']);
+
+        $model = new \App\Models\Book();
+        $expected = $model->listBooks('title', 'a/b', 3);
+        $this->assertSame(
+            $expected['pagination']['total_results'],
+            $data['pagination']['total_results'],
+            'The trailing "/3" must be the page, "a/b" must be the value'
+        );
     }
 
     /**
