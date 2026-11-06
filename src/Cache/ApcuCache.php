@@ -2,6 +2,8 @@
 
 namespace App\Cache;
 
+use App\Config\Config;
+
 /**
  * Direct APCu cache — no adapter layer.
  *
@@ -21,7 +23,7 @@ class ApcuCache
     public function __construct(int $defaultTtl = 86400)
     {
         $this->defaultTtl = $defaultTtl; // 24 hours default
-        $this->fallbackDir = dirname(__DIR__, 2) . '/cache';
+        $this->fallbackDir = Config::cacheDir();
 
         $cliApcuEnabled = PHP_SAPI !== 'cli'
             || filter_var(ini_get('apc.enable_cli'), FILTER_VALIDATE_BOOLEAN);

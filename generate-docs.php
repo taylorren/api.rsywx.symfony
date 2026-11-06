@@ -4,15 +4,11 @@ require_once 'vendor/autoload.php';
 
 use OpenApi\Generator;
 
-// Generate OpenAPI documentation
+// Writes to docs/ (NOT public/) so the output is never served statically and
+// can never shadow the on-the-fly /api-docs.json route.
 $openapi = Generator::scan(['src/Controllers']);
 
-// Save as JSON
-file_put_contents('public/api-docs.json', $openapi->toJson());
+file_put_contents('docs/api-docs.json', $openapi->toJson());
+file_put_contents('docs/api-docs.yaml', $openapi->toYaml());
 
-// Save as YAML (optional)
-file_put_contents('public/api-docs.yaml', $openapi->toYaml());
-
-echo "API documentation generated successfully!\n";
-echo "JSON: public/api-docs.json\n";
-echo "YAML: public/api-docs.yaml\n";
+echo "Wrote docs/api-docs.json and docs/api-docs.yaml\n";

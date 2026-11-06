@@ -6,8 +6,6 @@
         "php": ">=8.0",
         "slim/slim": "^4.0",
         "slim/psr7": "^1.0",
-        "php-di/php-di": "^6.0",
-        "monolog/monolog": "^2.0",
         "vlucas/phpdotenv": "^5.0",
         "zircote/swagger-php": "^4.0"
     },
@@ -26,7 +24,7 @@
         }
     },
     "scripts": {
-        "start": "php -S localhost:8000 -t public",
+        "start": "php -S localhost:8000 -t public public/router.php",
         "docs": "php generate-docs.php",
         "test": "phpunit",
         "test-unit": "phpunit --testsuite=\"Unit Tests\"",

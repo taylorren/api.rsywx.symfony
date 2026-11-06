@@ -21,26 +21,30 @@ class BookStatus
 
     public function getCollectionStatus(bool $forceRefresh = false): array
     {
-        // Try to get from cache first
-        if (!$forceRefresh) {
-            $cached = $this->cache->get($this->cacheKey);
-            if ($cached !== null) {
-                return [
-                    'data' => $cached,
-                    'from_cache' => true
-                ];
-            }
+        // The static totals (books/pages/keywords) change rarely and are cached
+        // for 24h. total_visits changes constantly, so it is computed fresh on
+        // every call from the denormalized counter column (a cheap SUM over the
+        // ~2k-row book_book table) instead of being served stale from cache.
+        $static = null;
+        if ($forceRefresh === false) {
+            $static = $this->cache->get($this->cacheKey);
         }
 
-        // Fetch fresh data from database
-        $status = $this->fetchCollectionStatusFromDb();
-        
-        // Cache the result
-        $this->cache->set($this->cacheKey, $status, $this->cacheTtl);
-        
+        $fromCache = ($static !== null);
+
+        if ($static === null) {
+            $static = $this->fetchStaticStatsFromDb();
+            $this->cache->set($this->cacheKey, $static, $this->cacheTtl);
+        }
+
         return [
-            'data' => $status,
-            'from_cache' => false
+            'data' => [
+                'total_books' => (int) $static['total_books'],
+                'total_pages' => (int) $static['total_pages'],
+                'total_kwords' => (int) $static['total_kwords'],
+                'total_visits' => $this->fetchTotalVisitsFromDb(),
+            ],
+            'from_cache' => $fromCache,
         ];
     }
 
@@ -49,24 +53,31 @@ class BookStatus
         return $this->cache->delete($this->cacheKey);
     }
 
-    private function fetchCollectionStatusFromDb(): array
+    private function fetchStaticStatsFromDb(): array
     {
-        // Single aggregate pass over book_book (the table is small and fully
-        // indexed via idx_book_book_nl on location). Previously this issued four
-        // separate scalar subqueries, each rescanning the table. total_visits
-        // reads the denormalized counter column (maintained by the book_visit
-        // trigger), avoiding a full scan of book_visit (~2.3M rows).
+        // Single aggregate pass over the small, fully indexed book_book table.
         $query = "
             SELECT
-                COUNT(*)                          AS total_books,
-                COALESCE(SUM(page), 0)            AS total_pages,
-                COALESCE(SUM(kword), 0)           AS total_kwords,
-                COALESCE(SUM(total_visits), 0)    AS total_visits
+                COUNT(*)                AS total_books,
+                COALESCE(SUM(page), 0)  AS total_pages,
+                COALESCE(SUM(kword), 0) AS total_kwords
             FROM book_book
             WHERE location NOT IN ('na', '--')
         ";
 
-        $stmt = $this->db->query($query);
-        return $stmt->fetch();
+        return $this->db->query($query)->fetch();
+    }
+
+    private function fetchTotalVisitsFromDb(): int
+    {
+        // Reads the denormalized counter (maintained by the book_visit trigger)
+        // instead of scanning the multi-million-row book_visit table.
+        $query = "
+            SELECT COALESCE(SUM(total_visits), 0) AS total_visits
+            FROM book_book
+            WHERE location NOT IN ('na', '--')
+        ";
+
+        return (int) $this->db->query($query)->fetch()['total_visits'];
     }
 }

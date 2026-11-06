@@ -37,3 +37,8 @@ Thumbs.db
 # Apache logs
 apache_access.log
 apache_error.log
+# Generated API docs (regenerate with `composer docs`)
+docs/api-docs.json
+docs/api-docs.yaml
+public/api-docs.json
+public/api-docs.yaml

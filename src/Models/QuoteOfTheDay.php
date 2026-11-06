@@ -28,10 +28,14 @@ class QuoteOfTheDay
 
     private function fetchQuoteOfTheDayFromDb(): array
     {
-        // Get a truly random quote from the qotd table
-        $query = "SELECT id, quote, source FROM qotd ORDER BY RAND() LIMIT 1";
+        // Random row by offset (avoids ORDER BY RAND()).
+        $count = (int) $this->db->query("SELECT COUNT(*) AS c FROM qotd")->fetch()['c'];
+        if ($count === 0) {
+            throw new NotFoundException('No quote available');
+        }
 
-        $stmt = $this->db->prepare($query);
+        $stmt = $this->db->prepare("SELECT id, quote, source FROM qotd LIMIT 1 OFFSET ?");
+        $stmt->bindValue(1, random_int(0, $count - 1), PDO::PARAM_INT);
         $stmt->execute();
         $quote = $stmt->fetch();
 

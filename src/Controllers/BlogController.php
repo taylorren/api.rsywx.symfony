@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Cache\ApcuCache;
+use App\Config\Config;
 use App\Exceptions\UpstreamException;
 use App\Exceptions\ValidationException;
 use App\WordPress\SimpleWordPressDB;
@@ -23,14 +24,15 @@ class BlogController
 
     public function __construct()
     {
-        // Simple env-based config
+        // Simple env-based config (Config::get also honours real environment
+        // variables, not just .env).
         try {
             $this->wpdb = new SimpleWordPressDB(
-                $_ENV['WP_DB_HOST'] ?? 'localhost',
-                $_ENV['WP_DB_NAME'] ?? 'wordpress',
-                $_ENV['WP_DB_USER'] ?? 'wp_user',
-                $_ENV['WP_DB_PASSWORD'] ?? '',
-                $_ENV['WP_DB_PREFIX'] ?? 'wp_'
+                Config::get('WP_DB_HOST', 'localhost') ?? 'localhost',
+                Config::get('WP_DB_NAME', 'wordpress') ?? 'wordpress',
+                Config::get('WP_DB_USER', 'wp_user') ?? 'wp_user',
+                Config::get('WP_DB_PASSWORD', '') ?? '',
+                Config::get('WP_DB_PREFIX', 'wp_') ?? 'wp_'
             );
         } catch (\Exception $e) {
             throw new UpstreamException('Blog database unavailable', $e->getMessage(), $e);

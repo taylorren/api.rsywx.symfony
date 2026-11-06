@@ -37,9 +37,6 @@ class BookQueryBuilder
                 case 'purchase':
                     $this->includePurchaseFields();
                     break;
-                case 'visits':
-                    $this->includeVisitFields();
-                    break;
                 case 'visit_stats':
                     $this->includeVisitStats();
                     break;
@@ -72,10 +69,10 @@ class BookQueryBuilder
     
     private function includeVisitFields()
     {
-        // For last visited books - get the most recent visit info
-        $this->addField('recent_visits.visitwhen', 'last_visited');
-        $this->addField('recent_visits.region', 'region');
-        
+        // NOTE: the former "visits" field group referenced recent_visits.*
+        // columns without guaranteeing the join (only lastVisited() adds it) and
+        // was never used. lastVisited() adds its own join and fields, so this
+        // method is now intentionally a no-op.
         return $this;
     }
     
@@ -127,10 +124,14 @@ class BookQueryBuilder
         return $this;
     }
     
-    public function random(int $count = 1): self
+    public function limitTo(int $limit): self
     {
-        $this->addOrderBy('RAND()');
-        $this->limit($count);
+        return $this->limit($limit);
+    }
+
+    public function offsetBy(int $offset): self
+    {
+        $this->offset = max(0, $offset);
         return $this;
     }
     
@@ -324,13 +325,13 @@ class BookQueryBuilder
     
     public function searchByAuthor(string $author): self
     {
-        $this->addCondition("b.author LIKE ?", "%{$author}%");
+        $this->addCondition("b.author LIKE ?", '%' . $this->escapeLike($author) . '%');
         return $this;
     }
     
     public function searchByTitle(string $title): self
     {
-        $this->addCondition("b.title LIKE ?", "%{$title}%");
+        $this->addCondition("b.title LIKE ?", '%' . $this->escapeLike($title) . '%');
         return $this;
     }
     
@@ -340,12 +341,27 @@ class BookQueryBuilder
         $this->addCondition("t.tag = ?", $tag);
         return $this;
     }
+
+    /**
+     * Escape LIKE wildcards so user input is matched literally.
+     * Uses chr(92) (backslash) as the escape character (MySQL default).
+     */
+    private function escapeLike(string $value): string
+    {
+        $backslash = chr(92);
+
+        return str_replace(
+            [$backslash, '%', '_'],
+            [$backslash . $backslash, $backslash . '%', $backslash . '_'],
+            $value
+        );
+    }
     
     public function searchMisc(string $value): self
     {
         $this->conditions[] = [
             'condition' => "(b.title LIKE ? OR b.author LIKE ?)", 
-            'values' => ["%{$value}%", "%{$value}%"]
+            'values' => ['%' . $this->escapeLike($value) . '%', '%' . $this->escapeLike($value) . '%']
         ];
         return $this;
     }
@@ -365,10 +381,9 @@ class BookQueryBuilder
         $query .= $this->baseQuery . " ";
         $query .= implode(' ', $this->joins) . " ";
         
-        // Filter out LIMIT conditions and location filter
-        $countConditions = array_filter($this->conditions, function($c) {
-            return !str_contains($c['condition'], 'LIMIT');
-        });
+        // Count uses the same conditions as execute(). LIMIT/OFFSET are not
+        // conditions, so there is nothing extra to strip here.
+        $countConditions = $this->conditions;
         
         // Always exclude invalid locations for count
         $countConditions[] = ['condition' => "b.location NOT IN ('na', '--')", 'value' => null];

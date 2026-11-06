@@ -2,6 +2,7 @@
 
 namespace App\WordPress;
 
+use App\Config\Config;
 use PDO;
 use PDOException;
 
@@ -63,7 +64,7 @@ class SimpleWordPressDB
         $posts = $stmt->fetchAll();
         
         // Add permalink to each post
-        $blogUrl = $_ENV['WP_BLOG_URL'] ?? 'https://blog.rsywx.net';
+        $blogUrl = Config::blogUrl();
         foreach ($posts as &$post) {
             // Generate WordPress permalink: https://blog.rsywx.net/YYYY/MM/DD/post-name/
             $date = new \DateTime($post['post_date']);
@@ -104,7 +105,7 @@ class SimpleWordPressDB
         $stmt->execute([$count]);
         $posts = $stmt->fetchAll();
 
-        $blogUrl = $_ENV['WP_BLOG_URL'] ?? 'https://blog.rsywx.net';
+        $blogUrl = Config::blogUrl();
         foreach ($posts as &$post) {
             $post['post_excerpt'] = self::buildExcerpt($post['post_excerpt'], $post['post_content']);
             unset($post['post_content']); // too long for a list response

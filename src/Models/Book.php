@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Database\Connection;
 use App\Exceptions\NotFoundException;
 use App\Cache\ApcuCache;
+use App\Config\Config;
 use PDO;
 
 class Book
@@ -19,7 +20,7 @@ class Book
         $this->cache = new ApcuCache();
     }
 
-    public function getBookDetail(string $bookid, bool $forceRefresh = false): ?array
+    public function getBookDetail(string $bookid, bool $forceRefresh = false, bool $recordVisit = true): ?array
     {
         $cacheKey = "book_detail_{$bookid}";
 
@@ -46,8 +47,11 @@ class Book
         // Always get fresh visit data
         $visitData = $this->getBookVisitData($bookData['id']);
 
-        // Update visit record when book is accessed
-        $this->updateVisit($bookData['id']);
+        // Update visit record when book is accessed (unless suppressed by the
+        // caller, e.g. for prefetches / hover preloads -> ?visit=false).
+        if ($recordVisit) {
+            $this->updateVisit($bookData['id']);
+        }
 
         // Merge cached book data with fresh visit data
         return [
@@ -87,7 +91,7 @@ class Book
         $book['reviews'] = $this->getBookReviews($book['id']);
 
         // Add generated cover URI
-        $book['cover_uri'] = "https://api.rsywx.com/covers/{$book['bookid']}.jpg";
+        $book['cover_uri'] = Config::coverUri((string) $book['bookid']);
 
         // Convert fields to proper types for complete coverage
         $book['id'] = (int)$book['id'];
@@ -122,6 +126,32 @@ class Book
         }
 
         return $tags;
+    }
+
+    /**
+     * Batch-load tags for many books in one query.
+     *
+     * @param int[] $bookIds
+     * @return array<int, string[]> map of book id => tag list
+     */
+    private function getTagsForBooks(array $bookIds): array
+    {
+        $bookIds = array_values(array_unique(array_filter(array_map('intval', $bookIds))));
+        if (empty($bookIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($bookIds), '?'));
+        $query = "SELECT bid, tag FROM book_taglist WHERE bid IN ($placeholders) ORDER BY bid, tag";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute($bookIds);
+
+        $map = [];
+        while ($row = $stmt->fetch()) {
+            $map[(int) $row['bid']][] = $row['tag'];
+        }
+
+        return $map;
     }
 
     private function getBookReviews(int $bookId): array
@@ -230,12 +260,19 @@ class Book
 
         $fromCache = ($booksData !== null);
 
-        // If not cached, fetch from database using unified system
+        // Random selection without an ORDER BY RAND() full-table sort: pick a
+        // random offset within the (small, filtered) result set instead.
         if ($booksData === null) {
             $queryBuilder = new BookQueryBuilder();
+            $queryBuilder->includeFields(['purchase', 'visit_stats']);
+
+            $total = $queryBuilder->count();
+            $offset = $total > $count ? random_int(0, $total - $count) : 0;
+
             $books = $queryBuilder
-                ->includeFields(['purchase', 'visit_stats'])
-                ->random($count)
+                ->orderBy('b.id')
+                ->limitTo($count)
+                ->offsetBy($offset)
                 ->execute();
 
             // Convert to array format for caching
@@ -565,9 +602,12 @@ class Book
         $result = $queryBuilder->paginate($page, $perPage)->execute();
         $total = $queryBuilder->count();
 
-        // Load tags for each book
+        // Load tags for all books in a single query (avoids an N+1 per row).
+        $tagsByBook = $this->getTagsForBooks(array_map(function ($book) {
+            return (int) $book->id;
+        }, $result));
         foreach ($result as $book) {
-            $book->tags = $this->getBookTags($book->id);
+            $book->tags = $tagsByBook[(int) $book->id] ?? [];
         }
 
         $books = array_map(function ($book) {
@@ -653,6 +693,12 @@ class Book
             'region' => null
         ];
 
+        // Geolocation is optional (privacy / latency): disable with
+        // GEOLOCATION_ENABLED=false to skip the external lookup entirely.
+        if (!Config::geolocationEnabled()) {
+            return $defaultGeo;
+        }
+
         // Skip geolocation for local/private IPs
         if (
             !$ipAddress ||
@@ -662,9 +708,9 @@ class Book
         }
 
         try {
-            // Use ip-api.com (free service, 1000 requests/month limit)
-            // Alternative services: ipinfo.io, ipgeolocation.io, etc.
-            $url = "http://ip-api.com/json/{$ipAddress}?fields=status,country,regionName,city";
+            // Use ip-api.com (free service, 1000 requests/month limit).
+            // The endpoint is configurable via GEOLOCATION_API_URL.
+            $url = Config::geolocationApiUrl() . "/{$ipAddress}?fields=status,country,regionName,city";
 
             $context = stream_context_create([
                 'http' => [
@@ -814,7 +860,7 @@ class Book
 
             if ($score['total_score'] > 0.15) { // Lower threshold for discovery
                 $candidate['tags'] = $this->getBookTags($candidate['id']);
-                $candidate['cover_uri'] = "https://api.rsywx.com/covers/{$candidate['bookid']}.jpg";
+                $candidate['cover_uri'] = Config::coverUri((string) $candidate['bookid']);
 
                 // Convert fields to proper types
                 $candidate['id'] = (int)$candidate['id'];

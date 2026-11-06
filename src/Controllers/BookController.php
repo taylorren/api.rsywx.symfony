@@ -9,6 +9,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use OpenApi\Attributes as OA;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Config\Config;
 
 
 #[OA\Info(
@@ -17,8 +18,12 @@ use App\Exceptions\ValidationException;
     description: "A comprehensive API for managing your personal library collection. Access book details, collection statistics, and more."
 )]
 #[OA\Server(
+    url: "https://api.rsywx.com/api/v1",
+    description: "Production"
+)]
+#[OA\Server(
     url: "/api/v1",
-    description: "API v1"
+    description: "Current host (relative)"
 )]
 #[OA\SecurityScheme(
     securityScheme: "ApiKeyAuth",
@@ -113,6 +118,13 @@ class BookController
         required: false,
         schema: new OA\Schema(type: "boolean", example: false)
     )]
+    #[OA\Parameter(
+        name: "visit",
+        in: "query",
+        description: "Record a visit for this book (default true; set false for prefetches). Alias: record_visit",
+        required: false,
+        schema: new OA\Schema(type: "boolean", example: true)
+    )]
     #[OA\Response(
         response: 200,
         description: "Book details",
@@ -173,8 +185,18 @@ class BookController
         $queryParams = $request->getQueryParams();
         $forceRefresh = isset($queryParams['refresh']) && $queryParams['refresh'] === 'true';
 
+        // Explicit view-recording semantics: ?visit=true|false (alias
+        // ?record_visit=...) overrides the RECORD_VISITS default. Prefetches /
+        // hover preloads should pass visit=false so they don't inflate counts.
+        $recordVisit = Config::recordVisitsByDefault();
+        foreach (['visit', 'record_visit'] as $flag) {
+            if (isset($queryParams[$flag])) {
+                $recordVisit = filter_var($queryParams[$flag], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
+
         $bookModel = new Book();
-        $result = $bookModel->getBookDetail($bookid, $forceRefresh);
+        $result = $bookModel->getBookDetail($bookid, $forceRefresh, $recordVisit);
 
         if ($result === null) {
             throw new NotFoundException('Book not found');

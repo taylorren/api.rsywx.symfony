@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Database\Connection;
 use PDO;
 use App\Cache\ApcuCache;
+use App\Config\Config;
 
 class Reading
 {
@@ -144,7 +145,7 @@ class Reading
 
         // Add cover URI for the book being reviewed
         foreach ($readings as &$reading) {
-            $reading['cover_uri'] = "https://api.rsywx.com/covers/{$reading['bookid']}.jpg";
+            $reading['cover_uri'] = Config::coverUri((string) $reading['bookid']);
         }
 
         return $readings;
@@ -233,7 +234,7 @@ class Reading
 
         // Add cover URI for each book being reviewed
         foreach ($reviews as &$review) {
-            $review['cover_uri'] = "https://api.rsywx.com/covers/{$review['bookid']}.jpg";
+            $review['cover_uri'] = Config::coverUri((string) $review['bookid']);
         }
 
         return [

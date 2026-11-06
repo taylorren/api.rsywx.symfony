@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Config\Config;
+
 class BookResponse
 {
     // Core fields (always present)
@@ -62,7 +64,7 @@ class BookResponse
 
         // Always ensure cover_uri is set
         if ($this->bookid && !$this->cover_uri) {
-            $this->cover_uri = "https://api.rsywx.com/covers/{$this->bookid}.jpg";
+            $this->cover_uri = Config::coverUri((string) $this->bookid);
             $this->setFields[] = 'cover_uri';
         }
         

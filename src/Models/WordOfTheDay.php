@@ -29,10 +29,14 @@ class WordOfTheDay
 
     private function fetchWordOfTheDayFromDb(): array
     {
-        // Get a truly random word from the wotd table
-        $query = "SELECT id, word, meaning, sentence, type FROM wotd ORDER BY RAND() LIMIT 1";
+        // Random row by offset (avoids ORDER BY RAND()).
+        $count = (int) $this->db->query("SELECT COUNT(*) AS c FROM wotd")->fetch()['c'];
+        if ($count === 0) {
+            throw new NotFoundException('No word available');
+        }
 
-        $stmt = $this->db->prepare($query);
+        $stmt = $this->db->prepare("SELECT id, word, meaning, sentence, type FROM wotd LIMIT 1 OFFSET ?");
+        $stmt->bindValue(1, random_int(0, $count - 1), PDO::PARAM_INT);
         $stmt->execute();
         $word = $stmt->fetch();
 

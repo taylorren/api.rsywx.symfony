@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Cache\ApcuCache;
+use App\Config\Config;
 use App\Exceptions\ApiException;
 use App\Exceptions\UpstreamException;
 use App\Exceptions\ValidationException;
@@ -11,12 +12,13 @@ class Weather
 {
     private ApcuCache $cache;
     private ?string $apiKey;
-    private string $baseUrl = 'https://ne5rk4nwr6.re.qweatherapi.com/v7';
+    private string $baseUrl;
 
     public function __construct()
     {
         $this->cache = new ApcuCache();
         $this->apiKey = $_ENV['QWEATHER_API_KEY'] ?? null;
+        $this->baseUrl = rtrim(Config::get('QWEATHER_BASE_URL', 'https://ne5rk4nwr6.re.qweatherapi.com/v7') ?? '', '/');
 
         if (!$this->apiKey) {
             throw new ApiException('Weather service is not configured', 500, 'QWEATHER_API_KEY missing from environment');

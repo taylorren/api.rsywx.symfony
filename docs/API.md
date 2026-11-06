@@ -97,6 +97,16 @@ Returns **HTTP 200** and:
 ```
 Use this to ping liveness/uptime.
 
+#### `POST /admin/cache/clear` — Clear cache *(auth required)*
+Clears all cached responses, or a single logical key with `?key=<key>`.
+```json
+{ "success": true, "data": { "cleared": true, "scope": "all", "key": null }, "cached": false }
+```
+
+#### `GET /api-docs.json` · `GET /api-docs.yaml` — OpenAPI spec *(no auth)*
+Generated on demand from the controller annotations (cached 1h; add `?refresh=true` to rebuild).
+The ReDoc viewer is served at `/`.
+
 ---
 
 ### 4.2 Books
@@ -124,7 +134,7 @@ Returns totals across the collection (**book located** outside `na`/`--`):
 
 #### `GET /books/{bookid}` — Book detail
 Path params: `bookid` — 5-digit book ID (e.g. `00666`).
-Query: `refresh` (optional).
+Query: `refresh` (optional), `visit` (optional bool, default `true`; alias `record_visit`). Set `visit=false` for prefetches / hover-preloads so they don't record a visit.
 
 Returns full book record incl. tags, reviews, cover, and visit stats:
 ```jsonc
@@ -582,7 +592,7 @@ the content is stripped of tags, decoded, whitespace-collapsed and truncated to
 
 | Endpoint | Default TTL | Notes |
 |---|---|---|
-| `/books/status` | 24h | `?refresh=true` to force |
+| `/books/status` | 24h (static) | static totals cached; `total_visits` is always fresh |
 | `/books/{bookid}` | 24h | visit count still increments live on each hit, but displayed `total_visits` may lag until expiry/refresh |
 | `/readings/*` | 24h | `?refresh=true` to force |
 | `/misc/weather/*` | 10-30 min | external API |
@@ -594,6 +604,8 @@ the content is stripped of tags, decoded, whitespace-collapsed and truncated to
 
 For a freshly-updated value, append `?refresh=true`.
 
+Clear server-side caches with `POST /api/v1/admin/cache/clear` (auth required; `?key=<key>` for a single entry).
+
 ---
 
 ## 6. Typical frontend flow
@@ -602,7 +614,7 @@ For a freshly-updated value, append `?refresh=true`.
 2. `GET /books/status` — top stats (with `refresh=true` on background refresh).
 3. `GET /books/latest/5` and `GET /books/random/5` — homepage shelves.
 4. `GET /books/list/title/{q}` or `type=author` — search results (paginate by page).
-5. `GET /books/{bookid}` — detail view (fires a visit, which increments `total_visits`).
+5. `GET /books/{bookid}` — detail view (records a visit; add `?visit=false` for prefetch/preload so it doesn't).
 6. `GET /books/popular/10`, `GET /books/forgotten/10` — recommendation shelves.
 7. `GET /readings/reviews/{page}` and `GET /readings/latest` — blog/review widgets.
 8. `GET /blogs/today` — "on this day in history" widget.
