@@ -261,19 +261,17 @@ class Book
 
         $fromCache = ($booksData !== null);
 
-        // Random selection without an ORDER BY RAND() full-table sort: pick a
-        // random offset within the (small, filtered) result set instead.
         if ($booksData === null) {
             $queryBuilder = new BookQueryBuilder();
             $queryBuilder->includeFields(['purchase', 'visit_stats']);
 
-            $total = $queryBuilder->count();
-            $offset = $total > $count ? random_int(0, $total - $count) : 0;
-
+            // True random sample: ORDER BY RAND(). The book table is small
+            // (~2k rows) so a full random sort is cheap. The previous random-offset
+            // approach returned a *consecutive* run of ids (e.g. 01594..01599),
+            // which is not random.
             $books = $queryBuilder
-                ->orderBy('b.id')
+                ->orderBy('RAND()')
                 ->limitTo($count)
-                ->offsetBy($offset)
                 ->execute();
 
             // Convert to array format for caching
